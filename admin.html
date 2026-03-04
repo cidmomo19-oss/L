@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Video Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #111827; color: #d1d5db; }
+        .form-input { background-color: #1f2937; border-color: #4b5563; color: #d1d5db; }
+        .form-input:focus { border-color: #3b82f6; ring: 1; ring-color: #3b82f6; }
+        .btn-primary { background-color: #2563eb; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .result-box { background-color: #1f2937; border-left: 4px solid #2563eb; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-lg p-8 space-y-6 bg-gray-900 rounded-xl shadow-lg">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Video Uploader</h1>
+            <p class="text-gray-400">Generate ID dan simpan link ke KV.</p>
+        </div>
+
+        <form id="video-form" class="space-y-4">
+            <div>
+                <label for="src-input" class="block text-sm font-medium">Link Video (Embed/mp4/m3u8)</label>
+                <input type="url" id="src-input" required class="form-input mt-1 block w-full rounded-md shadow-sm" placeholder="https://server.com/file.mp4">
+            </div>
+            
+            <div>
+                <label for="download-input" class="block text-sm font-medium">Link Download (Pixeldrain)</label>
+                <input type="url" id="download-input" required class="form-input mt-1 block w-full rounded-md shadow-sm" placeholder="https://pixeldrain.com/u/xxxxxx">
+            </div>
+
+            <div>
+                <label for="type-select" class="block text-sm font-medium">Tipe Video</label>
+                <select id="type-select" class="form-input mt-1 block w-full rounded-md shadow-sm">
+                    <option value="embed">Embed (Iframe)</option>
+                    <option value="mp4" selected>MP4 (Video Native)</option>
+                    <option value="m3u8">M3U8 (HLS)</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="password-input" class="block text-sm font-medium">Password Admin</label>
+                <input type="password" id="password-input" required class="form-input mt-1 block w-full rounded-md shadow-sm" placeholder="••••••••">
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full btn-primary text-white font-bold py-2 px-4 rounded-md">
+                Generate & Save
+            </button>
+        </form>
+
+        <div id="result-area" class="hidden mt-6">
+            <h3 class="font-semibold text-green-400">Sukses! Link berhasil dibuat:</h3>
+            <div class="result-box p-4 mt-2 rounded-md">
+                <code id="final-url" class="text-sm text-yellow-300 break-all"></code>
+            </div>
+            <button onclick="copyToClipboard()" class="mt-2 w-full text-sm text-center py-2 bg-gray-700 hover:bg-gray-600 rounded-md">Copy Link</button>
+        </div>
+        
+        <div id="error-area" class="hidden mt-4 text-sm text-red-400"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('video-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultArea = document.getElementById('result-area');
+        const errorArea = document.getElementById('error-area');
+        const finalUrlEl = document.getElementById('final-url');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                src: document.getElementById('src-input').value,
+                download: document.getElementById('download-input').value,
+                type: document.getElementById('type-select').value,
+                password: document.getElementById('password-input').value
+            };
+
+            // UI feedback
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Menyimpan...';
+            resultArea.classList.add('hidden');
+            errorArea.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Terjadi kesalahan');
+                }
+
+                // Sukses! Tampilkan link
+                const playerUrl = `${window.location.origin}/?id=${result.id}&ip=USER_IP_DISINI`;
+                finalUrlEl.textContent = playerUrl;
+                resultArea.classList.remove('hidden');
+
+            } catch (err) {
+                errorArea.textContent = `Error: ${err.message}`;
+                errorArea.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Generate & Save';
+            }
+        });
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(finalUrlEl.textContent)
+                .then(() => alert('Link berhasil disalin!'))
+                .catch(err => alert('Gagal menyalin link.'));
+        }
+    </script>
+</body>
+</html>
