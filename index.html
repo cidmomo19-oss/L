@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PENTING: Memaksa browser mengirim domain asli -->
     <meta name="referrer" content="unsafe-url" />
     
     <title>Seputar Link Videy</title>
@@ -14,102 +16,281 @@
     <meta property="og:description" content="Tempat nonton anu-anu" />
     <meta property="og:image" content="https://i.ibb.co.com/sdyjjS3s/Picsart-26-02-06-19-47-12-991-2.jpg" />
 
+    <!-- LIBRARY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body {
-            font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a;
-            margin: 0; display: flex; flex-direction: column; align-items: center;
-            justify-content: flex-start; min-height: 100vh; overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
             transition: background-color 0.3s, color 0.3s;
         }
+
+        /* --- DARK MODE CONFIG --- */
         body.dark-mode { background-color: #050505; color: #e5e5e5; }
         body.dark-mode .wa-modal-content { background-color: #1e1e1e; border-color: #333; color: #fff; }
+        body.dark-mode .wa-modal-content h3 { color: #ffffff; }
+        body.dark-mode .step-text { color: #cbd5e1; }
+        body.dark-mode .step-text strong { color: #ffffff; }
+        body.dark-mode .wa-input-label { color: #cbd5e1; }
         body.dark-mode .step-num { background: #333; color: #fff; }
         body.dark-mode textarea.wa-textarea { background-color: #1e293b; border-color: #334155; color: #ffffff; }
-        body.dark-mode .btn-icon-only, body.dark-mode .btn-server { background: #1e293b; border-color: #334155; color: #f8fafc; }
+        body.dark-mode textarea.wa-textarea::placeholder { color: #94a3b8; }
+        body.dark-mode .btn-wa-cancel { color: #e2e8f0; border-color: #475569; }
+        body.dark-mode .btn-wa-cancel:hover { background: #334155; }
+        body.dark-mode .btn-icon-only { background: #1e293b; border-color: #334155; color: #f8fafc; }
+        body.dark-mode .btn-server { background: #1e293b; border-color: #334155; color: #f8fafc; }
         body.dark-mode .server-dropdown { background: #1e293b; border-color: #334155; }
         body.dark-mode .server-item { color: #cbd5e1; border-bottom-color: #334155; }
         body.dark-mode .server-item:hover { background: #334155; color: #fff; }
         body.dark-mode .server-item.active { background: #1e3a8a; color: #fff; }
 
-        #content-wrapper { width: 95%; max-width: 854px; display: flex; flex-direction: column; align-items: center; z-index: 10; padding-bottom: 50px; margin-top: 10px; }
-        .player-container { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 20; display: flex; align-items: center; justify-content: center; }
-        video, iframe { width: 100%; height: 100%; object-fit: contain; outline: none; display: block; border: none; }
+        /* WRAPPER */
+        #content-wrapper {
+            width: 95%; max-width: 854px;
+            display: flex; flex-direction: column; align-items: center;
+            z-index: 10; padding-bottom: 50px; margin-top: 10px;
+        }
 
-        #embed-loader { position: absolute; inset: 0; background: #000; z-index: 15; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        /* PLAYER CONTAINER */
+        .player-container {
+            width: 100%; aspect-ratio: 16 / 9;
+            background: #000; border-radius: 12px; 
+            overflow: hidden; position: relative; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 20; display: flex; align-items: center; justify-content: center;
+        }
+        
+        video, iframe { 
+            width: 100%; height: 100%; 
+            object-fit: contain; 
+            outline: none; display: block; border: none;
+        }
+
+        /* LOADING SPINNER */
+        #embed-loader {
+            position: absolute; inset: 0; 
+            background: #000; z-index: 15; 
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        .spinner {
+            width: 40px; height: 40px; 
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #2563eb; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
         #status-message { color: #9ca3af; font-weight: 500; margin-top: 10px; }
 
-        #ad-overlay { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); cursor: pointer; color: #ffffff; }
-        .lock-title { font-size: 16px; font-weight: 700; margin-bottom: 24px; text-align: center; text-transform: uppercase; letter-spacing: 1px; color: #f8fafc; text-shadow: 0 2px 4px rgba(0,0,0,0.5); padding: 0 15px; line-height: 1.4; }
+        /* --- AD OVERLAY (VIDEO LOCK) --- */
+        #ad-overlay {
+            position: absolute; inset: 0; z-index: 50; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); cursor: pointer;
+            color: #ffffff; font-family: 'Inter', sans-serif;
+        }
+        .lock-title {
+            font-size: 16px; font-weight: 700; margin-bottom: 24px; text-align: center;
+            text-transform: uppercase; letter-spacing: 1px; color: #f8fafc;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); padding: 0 15px; line-height: 1.4;
+        }
         .lock-title span { color: #3b82f6; }
-        .fake-play-btn { width: 75px; height: 75px; background: rgba(37, 99, 235, 0.95); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 0 25px rgba(37, 99, 235, 0.6); animation: pulse 2s infinite; }
-        .fake-play-btn svg { width: 36px; height: 36px; transform: translateX(2px); }
-        .lock-counter { margin-top: 24px; font-size: 15px; font-weight: 600; background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2); }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
-
-        #tools-container { width: 100%; display: flex; flex-direction: row; align-items: flex-start; margin-top: 12px; z-index: 30; position: relative; }
-        .tools-left { display: flex; gap: 5px; margin-right: auto; }
-        .btn-icon-only { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; transition: all 0.2s; }
-        .server-wrapper { position: relative; display: none; margin-left: auto; }
-        .btn-server { height: 42px; padding: 0 16px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }
-        .server-dropdown { position: absolute; top: 50px; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; width: 140px; display: none; flex-direction: column; overflow: hidden; z-index: 100; }
-        .server-dropdown.show { display: flex; }
-        .server-item { padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         
-        #wa-modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+        .fake-play-btn {
+            width: 75px; height: 75px; background: rgba(37, 99, 235, 0.95);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: #fff; box-shadow: 0 0 25px rgba(37, 99, 235, 0.6);
+            transition: transform 0.1s; animation: pulse 2s infinite;
+        }
+        
+        .fake-play-btn svg { width: 36px; height: 36px; transform: translateX(2px); }
+        #ad-overlay:active .fake-play-btn { transform: scale(0.9); }
+        
+        .lock-counter {
+            margin-top: 24px; font-size: 15px; font-weight: 600;
+            background: rgba(255,255,255,0.1); padding: 8px 20px;
+            border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+
+        /* --- TOOLBAR --- */
+        #tools-container {
+            width: 100%; display: flex; flex-direction: row; align-items: flex-start;
+            margin-top: 12px; z-index: 30; position: relative;
+        }
+        .tools-left { display: flex; gap: 5px; margin-right: auto; }
+        .btn-icon-only {
+            width: 42px; height: 42px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a;
+            transition: all 0.2s;
+        }
+        .btn-icon-only:hover { transform: translateY(-2px); }
+
+        .server-wrapper { position: relative; display: none; margin-left: auto; }
+        .btn-server {
+            height: 42px; padding: 0 16px; border-radius: 10px;
+            border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;
+        }
+        .server-dropdown {
+            position: absolute; top: 50px; right: 0;
+            background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; width: 140px;
+            display: none; flex-direction: column; overflow: hidden; z-index: 100;
+        }
+        .server-dropdown.show { display: flex; animation: fadeInDown 0.2s ease; }
+        .server-item { padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        .server-item:last-child { border-bottom: none; }
+        .server-item:hover { background: #f8fafc; color: #2563eb; }
+        .server-item.active { background: #eff6ff; color: #2563eb; }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .icon-sun { display: none; }
+        .icon-moon { display: block; }
+        body.dark-mode .icon-sun { display: block; }
+        body.dark-mode .icon-moon { display: none; }
+
+        /* --- WA MODAL --- */
+        #wa-modal {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
+        }
         #wa-modal.open { display: flex; opacity: 1; }
-        .wa-modal-content { background: #fff; width: 90%; max-width: 380px; border-radius: 16px; padding: 24px; border: 1px solid #e2e8f0; }
+        .wa-modal-content {
+            background: #fff; width: 90%; max-width: 380px; border-radius: 16px; padding: 24px;
+            border: 1px solid #e2e8f0; transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        #wa-modal.open .wa-modal-content { transform: scale(1); }
+        .wa-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+        .step-num { width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #475569; flex-shrink: 0; }
+        .step-text { font-size: 13px; color: #334155; line-height: 1.5; text-align: left; }
+        .step-text strong { color: #0f172a; }
+        .wa-input-area { margin-top: 15px; margin-bottom: 10px; }
+        .wa-input-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; color: #64748b; }
+        .wa-textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: 'Inter', sans-serif; font-size: 13px; background: #f8fafc; outline: none; resize: none; height: 70px; transition: all 0.2s; }
+        .wa-textarea:focus { border-color: #2563eb; background: #fff; }
+        .wa-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-wa-cancel { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: transparent; color: #64748b; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .btn-wa-go { flex: 1.5; padding: 10px; border-radius: 8px; border: none; background: #22c55e; color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
     </style>
 </head>
-<body data-version="v5.3-KV-AGRESSIVE-ADS">
+<body data-version="v5.4-KV-FIXED-ORIGINAL">
 
+<!-- WA MODAL POPUP -->
 <div id="wa-modal">
     <div class="wa-modal-content">
-        <h3 class="text-lg font-bold mb-4">Lapor / Request</h3>
-        <textarea id="wa-text-input" class="wa-textarea w-full p-2 border rounded" placeholder="Pesan tambahan..."></textarea>
-        <div class="flex gap-2 mt-4">
-            <button class="flex-1 p-2 border rounded" onclick="toggleWaModal()">Tutup</button>
-            <button class="flex-1 p-2 bg-green-500 text-white rounded" onclick="redirectToWa()">Kirim</button>
-        </div>
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+            </svg>
+            Lapor / Request
+        </h3>
+
+    <div class="wa-step">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>Screenshot</strong> layar jika error.</div>
+    </div>
+    <div class="wa-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Tulis detail masalah atau <strong>Video</strong> yang mau direquest:</div>
+    </div>
+
+    <div class="wa-input-area">
+        <label class="wa-input-label">Pesan Tambahan (Opsional):</label>
+        <textarea id="wa-text-input" class="wa-textarea" placeholder="Contoh: Min, request douyin / Min, download eror"></textarea>
+    </div>
+
+    <div class="wa-actions">
+        <button class="btn-wa-cancel" onclick="toggleWaModal()">Tutup</button>
+        <button class="btn-wa-go" onclick="redirectToWa()">
+            Chat Admin
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+    </div>
     </div>
 </div>
 
 <div id="content-wrapper">
     <div class="player-container">
+        
+        <!-- OVERLAY PENGUNCI VIDEO (IKLAN KLIK) -->
         <div id="ad-overlay" onclick="processGateClick()">
             <div class="lock-title">Klik Play <span>5 Kali</span><br>Untuk Membuka Video</div>
-            <div class="fake-play-btn"><svg viewBox="0 0 24 24" fill="currentColor" width="36"><path d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"/></svg></div>
+            <div class="fake-play-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" />
+                </svg>
+            </div>
             <div class="lock-counter" id="lock-counter-text">0 / 5</div>
         </div>
-        <div id="embed-loader"><div class="spinner"></div><p id="status-message" class="hidden"></p></div>
-        <div id="native-player-wrapper" style="width:100%; height:100%; display:block;"><video id="player" controls playsinline style="width:100%; height:100%;"></video></div>
-        <iframe id="iframe-player" allowfullscreen style="display:none; width:100%; height:100%; border:none;"></iframe>
+
+        <div id="embed-loader">
+            <div class="spinner"></div>
+            <p id="status-message" class="hidden"></p>
+        </div>
+        
+        <!-- PLAYER 1: NATIVE VIDEO (Fallback) -->
+        <div id="native-player-wrapper" style="width:100%; height:100%; display:block;">
+            <video id="player" controls playsinline preload="none" style="width:100%; height:100%;">
+                Browser Anda tidak mendukung tag video.
+            </video>
+        </div>
+
+        <!-- PLAYER 2: EMBED IFRAME (Untuk Minochinos & Abyss) -->
+        <iframe id="iframe-player" allowfullscreen allow="autoplay; fullscreen" style="display:none; width:100%; height:100%; border:none;"></iframe>
     </div>
 
     <div id="tools-container">
         <div class="tools-left">
-            <button class="btn-icon-only" onclick="toggleTheme()">🌓</button>
-            <button class="btn-icon-only" onclick="executeDownload()">⬇️</button>
-            <button class="btn-icon-only" onclick="toggleWaModal()">💬</button>
+            <button class="btn-icon-only" onclick="toggleTheme()" title="Ganti Mode">
+                <svg class="icon-moon" style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                <svg class="icon-sun" style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </button>
+            <button class="btn-icon-only" onclick="executeDownload()" title="Download Video">
+                <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            </button>
+            <button class="btn-icon-only" onclick="toggleWaModal()" title="Lapor Masalah">
+                <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+            </button>
         </div>
+
         <div id="server-group" class="server-wrapper">
-            <button class="btn-server" onclick="toggleServerMenu()"><span id="current-server-name">Server 1</span></button>
+            <button class="btn-server" onclick="toggleServerMenu()">
+                <svg style="width:18px;height:18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>
+                <span id="current-server-name">Pilih Server</span>
+                <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
             <div id="server-list" class="server-dropdown"></div>
         </div>
     </div>
-</div>
 
 <script>
     let videoId, videoData = null, isUnlocked = false;
     const ADS = ["https://omg10.com/4/10390860", "https://fishermanwithavenge.com/bmaye227ji?key=21143f6352edf65a6b64615e9bb37bb9"];
 
-    // 1. AUTO APPEND IP KE URL (Cuma buat domain lu)
-    async function autoIp() {
+    // 1. AUTO APPEND IP (KE URL DOMAIN LU, BUKAN PIXELDRAIN)
+    async function autoAppendIp() {
         const p = new URLSearchParams(window.location.search);
         videoId = p.get('id');
         if (!p.has('ip')) {
@@ -122,7 +303,7 @@
         }
     }
 
-    // 2. LOGIKA IKLAN AGRESIF (TAB BARU + REDIRECT)
+    // 2. LOGIKA IKLAN ASLI (TAB BARU + HALAMAN UTAMA JADI IKLAN)
     function processGateClick() {
         let key = "gate_" + videoId;
         let c = parseInt(localStorage.getItem(key) || "0");
@@ -134,38 +315,45 @@
             document.getElementById('lock-counter-text').innerText = c + " / 5";
 
             if (c >= 5) {
-                window.open(ad1, '_blank'); // Tab baru iklan terakhir
+                // Klik terakhir (ke-5)
+                window.open(ad1, '_blank');
                 document.getElementById('ad-overlay').style.display = 'none';
                 isUnlocked = true;
-                if(videoId) fetchData();
+                if(videoId) fetchData(videoId);
             } else {
+                // Klik 1, 2, 3, 4
                 window.open(ad1, '_blank'); // Tab baru iklan
-                window.location.href = ad2; // Halaman utama jadi iklan (Redirect)
+                window.location.href = ad2; // Tab ini ganti jadi iklan
             }
         }
     }
 
-    async function fetchData() {
-        document.getElementById('embed-loader').style.display = 'flex';
+    // 3. FETCH DATA DARI KV (API)
+    async function fetchData(id) {
+        const loader = document.getElementById('embed-loader');
+        loader.style.display = 'flex';
         try {
-            const r = await fetch(`/api/video?id=${videoId}`);
+            const r = await fetch(`/api/video?id=${id}`);
+            if(!r.ok) throw new Error("Gagal load data");
             videoData = await r.json();
-            setupSrv(videoData.servers);
+            setupServers(videoData.servers);
             play(0);
         } catch (e) {
-            document.getElementById('status-message').innerText = "Gagal load video";
-            document.getElementById('status-message').classList.remove('hidden');
+            const msg = document.getElementById('status-message');
+            msg.innerText = e.message;
+            msg.classList.remove('hidden');
         }
     }
 
-    function setupSrv(s) {
-        if(!s || s.length < 2) return;
-        const l = document.getElementById('server-list'); l.innerHTML = '';
-        s.forEach((srv, i) => {
+    function setupServers(srvs) {
+        if(!srvs || srvs.length < 2) return;
+        const list = document.getElementById('server-list');
+        list.innerHTML = '';
+        srvs.forEach((s, i) => {
             const d = document.createElement('div');
             d.className = 'server-item'; d.innerText = "Server " + (i+1);
             d.onclick = () => { play(i); document.getElementById('server-list').classList.remove('show'); };
-            l.appendChild(d);
+            list.appendChild(d);
         });
         document.getElementById('server-group').style.display = 'block';
     }
@@ -173,39 +361,50 @@
     function play(i) {
         const s = videoData.servers[i];
         document.getElementById('current-server-name').innerText = "Server " + (i+1);
-        const v = document.getElementById('player'), f = document.getElementById('iframe-player'), w = document.getElementById('native-player-wrapper');
-        w.style.display = 'none'; f.style.display = 'none'; f.src = ""; v.src = "";
+        const vid = document.getElementById('player'), ifr = document.getElementById('iframe-player'), wrap = document.getElementById('native-player-wrapper');
+        wrap.style.display = 'none'; ifr.style.display = 'none'; ifr.src = ""; vid.src = "";
         
         setTimeout(() => {
-            if(s.type === 'embed') { f.src = s.url; f.style.display = 'block'; }
-            else if(s.type === 'm3u8') {
-                w.style.display = 'block';
-                if(Hls.isSupported()){ const h = new Hls(); h.loadSource(s.url); h.attachMedia(v); }
-                else v.src = s.url;
-                v.play().catch(()=>{});
-            } else { w.style.display = 'block'; v.src = s.url; v.play().catch(()=>{}); }
+            if (s.type === 'embed') { ifr.src = s.url; ifr.style.display = 'block'; } 
+            else if (s.type === 'm3u8') {
+                wrap.style.display = 'block';
+                if(Hls.isSupported()){ const h = new Hls(); h.loadSource(s.url); h.attachMedia(vid); }
+                else { vid.src = s.url; }
+                vid.play().catch(()=>{});
+            } else {
+                wrap.style.display = 'block'; vid.src = s.url; vid.play().catch(()=>{});
+            }
             document.getElementById('embed-loader').style.display = 'none';
         }, 300);
     }
 
-    // DOWNLOAD BERSIH (TANPA IP)
+    // 4. DOWNLOAD BERSIH (TANPA IP)
     function executeDownload() {
-        if(videoData && videoData.download) window.open(videoData.download, '_blank');
+        if(!videoData || !videoData.download) return;
+        window.open(videoData.download, '_blank');
     }
 
     (async function init() {
-        await autoIp();
+        await autoAppendIp();
         if(!videoId) return;
         let c = parseInt(localStorage.getItem("gate_" + videoId) || "0");
-        if(c >= 5) { document.getElementById('ad-overlay').style.display = 'none'; isUnlocked = true; fetchData(); }
+        if(c >= 5) { document.getElementById('ad-overlay').style.display = 'none'; isUnlocked = true; fetchData(videoId); }
         else { document.getElementById('lock-counter-text').innerText = c + " / 5"; document.getElementById('embed-loader').style.display = 'none'; }
     })();
 
+    // --- UI HELPERS (Fungsi Original) ---
     function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode')?'dark':'light'); }
     if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode');
     function toggleServerMenu() { document.getElementById('server-list').classList.toggle('show'); }
     function toggleWaModal() { document.getElementById('wa-modal').classList.toggle('open'); }
-    function redirectToWa() { window.open(`https://wa.me/6285126450524?text=${encodeURIComponent("Lapor: "+document.getElementById('wa-text-input').value+"\nURL: "+window.location.href)}`); }
+    function redirectToWa() {
+        const t = document.getElementById('wa-text-input').value;
+        window.open(`https://wa.me/6285126450524?text=${encodeURIComponent("Lapor: "+t+"\nLink: "+window.location.href)}`);
+    }
+    window.onclick = (e) => {
+        if(e.target == document.getElementById('wa-modal')) toggleWaModal();
+        if(!document.getElementById('server-group').contains(e.target)) document.getElementById('server-list').classList.remove('show');
+    }
 </script>
 </body>
 </html>
