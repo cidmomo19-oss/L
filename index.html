@@ -168,7 +168,7 @@
 
     </style>
 </head>
-<body data-version="v42.0-SPLIT-ID-DOWNLOAD">
+<body data-version="v42.0-SPLIT-ID-DOWNLOAD-PLAIN">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
@@ -255,33 +255,9 @@
         })
         .catch(e => console.log('IP silent fail'));
 
-    // --- DECODER ---
-    const MAP_A = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
-    const MAP_B = "poiuytrewqasdfghjklmnbvcxzPOIUYTREWQASDFGHJKLMNBVCXZ9876543210-_"; 
-
-    function decodeAbyss(s) {
-        let r = "";
-        for(let i=0; i<s.length; i++) {
-            let idx = MAP_B.indexOf(s[i]);
-            r += (idx !== -1) ? MAP_A[idx] : s[i];
-        }
-        return r;
-    }
-    
-    function decodeVerify(s) {
-        if (!/^\d+$/.test(s) || s.length % 2 !== 0) return s; 
-        let r = "";
-        for(let i=0; i<s.length; i+=2) {
-            let n = parseInt(s.substring(i, i+2));
-            let idx = n - 10; 
-            if(idx >= 0 && idx < MAP_A.length) r += MAP_A[idx];
-            else return s; 
-        }
-        return r;
-    }
 
     // --- GLOBAL VARS FOR DOWNLOAD ---
-    let _downloadId = ""; // Menyimpan ID Pixeldrain hasil split
+    let _downloadId = ""; // Menyimpan ID Pixeldrain asli hasil split
 
     // --- GATE LOGIC ---
     const LINKS = [
@@ -329,9 +305,8 @@
     // --- DOWNLOAD FUNCTION ---
     function triggerDownload() {
         if(!_downloadId) { alert("ID Download tidak ditemukan di URL."); return; }
-        // Decode ID Pixeldrain menggunakan cipher Abyss (asumsi cipher sama)
-        const realPixeldrainID = decodeAbyss(_downloadId);
-        window.open(`https://pixeldrain.com/u/${realPixeldrainID}`, '_blank');
+        // Menggunakan ID Pixeldrain tulisan asli (Plain Text)
+        window.open(`https://pixeldrain.com/u/${_downloadId}`, '_blank');
     }
 
     // --- INIT & PARSING ---
@@ -343,8 +318,8 @@
         const p = new URLSearchParams(window.location.search);
         let c = 1;
 
-        // PARSING LOGIC SPLIT TITIK
-        // Format: ?id=AbyssCode.PixeldrainCode
+        // PARSING LOGIC SPLIT TITIK (Tanpa Decoder)
+        // Format: ?id=PlayerCode.PixeldrainCode
         let rawId = p.get('id');
         let rawVerify = p.get('verify');
 
@@ -352,33 +327,29 @@
             // Cek apakah ada titik
             if (rawId.includes('.')) {
                 let parts = rawId.split('.');
-                let abyssPart = parts[0];   // Depan titik -> Player
-                let pixelPart = parts[1];   // Belakang titik -> Download
+                let playerPart = parts[0];   // Depan titik -> Player
+                let pixelPart = parts[1];    // Belakang titik -> Download
                 
-                // Simpan bagian download ke variable global (masih ter-encode)
+                // Simpan bagian download ke variable global
                 _downloadId = pixelPart;
 
-                // Proses bagian Player
-                let realId = decodeAbyss(abyssPart);
-                servers.push({ name: "Server " + c++, url: BASE_ABYSS + realId, mode: 'embed' });
+                // Proses bagian Player menggunakan ID asli
+                servers.push({ name: "Server " + c++, url: BASE_ABYSS + playerPart, mode: 'embed' });
 
             } else {
                 // Tidak ada titik, anggap cuma Player
-                let realId = decodeAbyss(rawId);
-                servers.push({ name: "Server " + c++, url: BASE_ABYSS + realId, mode: 'embed' });
+                servers.push({ name: "Server " + c++, url: BASE_ABYSS + rawId, mode: 'embed' });
             }
         }
 
-        // Support Legacy Verify (Minochinos)
+        // Support Legacy Verify (Minochinos) - Tanpa Decoder
         if (rawVerify) {
             if (rawVerify.includes('.')) {
                  let parts = rawVerify.split('.');
                  _downloadId = parts[1]; // Download
-                 let realId = decodeVerify(parts[0]); // Player
-                 servers.push({ name: "Server " + c++, url: BASE_MINO + realId, mode: 'embed' });
+                 servers.push({ name: "Server " + c++, url: BASE_MINO + parts[0], mode: 'embed' });
             } else {
-                 let realId = decodeVerify(rawVerify);
-                 servers.push({ name: "Server " + c++, url: BASE_MINO + realId, mode: 'embed' });
+                 servers.push({ name: "Server " + c++, url: BASE_MINO + rawVerify, mode: 'embed' });
             }
         }
 
