@@ -264,6 +264,7 @@
             <div id="server-list" class="server-dropdown"></div>
         </div>
     </div>
+// Ganti bagian <script>...</script> di index.html dengan ini
 
 <script>
     // --- GLOBAL VARIABLES ---
@@ -318,7 +319,7 @@
         const spinner = loader.querySelector('.spinner');
         const msg = document.getElementById('status-message');
         
-        loader.style.display = 'flex'; // Tampilkan loader
+        loader.style.display = 'flex'; 
         spinner.style.display = 'block';
         msg.classList.add('hidden');
 
@@ -329,7 +330,11 @@
                 throw new Error(err.error || `Server error: ${response.status}`);
             }
             videoData = await response.json();
-            playVideo(videoData);
+
+            // Setup UI Server & mainkan video pertama
+            setupServerUI(videoData.servers);
+            playVideoByIndex(0);
+
         } catch (error) {
             spinner.style.display = 'none';
             msg.textContent = `Error: ${error.message}`;
@@ -337,52 +342,84 @@
         }
     }
 
-    // --- PLAYER LOGIC (Dipanggil setelah data dari KV diterima) ---
-    function playVideo(data) {
-        if (!data || !data.src) return;
+    function setupServerUI(servers) {
+        if (!servers || servers.length < 2) {
+            document.getElementById('server-group').style.display = 'none';
+            return;
+        }
 
+        const serverGroup = document.getElementById('server-group');
+        const serverList = document.getElementById('server-list');
+        serverList.innerHTML = ''; // Kosongkan list
+
+        servers.forEach((server, index) => {
+            const item = document.createElement('div');
+            item.className = 'server-item';
+            item.innerText = `Server ${index + 1}`;
+            item.onclick = () => {
+                document.getElementById('server-list').classList.remove('show');
+                playVideoByIndex(index);
+            };
+            serverList.appendChild(item);
+        });
+
+        serverGroup.style.display = 'block';
+    }
+
+    // --- PLAYER LOGIC (Dipanggil setelah data dari KV diterima) ---
+    function playVideoByIndex(index) {
+        if (!videoData || !videoData.servers || !videoData.servers[index]) return;
+
+        const server = videoData.servers[index];
+
+        // Update UI server dropdown
+        document.getElementById('current-server-name').innerText = `Server ${index + 1}`;
+        document.querySelectorAll('.server-item').forEach((item, i) => {
+            item.classList.toggle('active', i === index);
+        });
+        
         const loader = document.getElementById('embed-loader');
         const nativePlayer = document.getElementById('player');
         const iframePlayer = document.getElementById('iframe-player');
         const nativeWrapper = document.getElementById('native-player-wrapper');
 
-        // Reset player
+        loader.style.display = 'flex';
         nativeWrapper.style.display = 'none';
         iframePlayer.style.display = 'none';
         nativePlayer.src = "";
         iframePlayer.src = "";
 
-        switch (data.type) {
-            case 'embed':
-                iframePlayer.src = data.src;
-                iframePlayer.style.display = 'block';
-                break;
-            case 'm3u8':
-                if (Hls.isSupported()) {
-                    const hls = new Hls(); hls.loadSource(data.src); hls.attachMedia(nativePlayer);
-                } else if (nativePlayer.canPlayType('application/vnd.apple.mpegurl')) {
-                    nativePlayer.src = data.src;
-                }
-                nativeWrapper.style.display = 'block';
-                nativePlayer.play().catch(()=>{});
-                break;
-            case 'mp4':
-            default:
-                nativePlayer.src = data.src;
-                nativeWrapper.style.display = 'block';
-                nativePlayer.play().catch(()=>{});
-                break;
-        }
-        loader.style.display = 'none'; // Sembunyikan loader setelah video siap
+        setTimeout(() => { // Kasih jeda sedikit biar transisi mulus
+            switch (server.type) {
+                case 'embed':
+                    iframePlayer.src = server.url;
+                    iframePlayer.style.display = 'block';
+                    break;
+                case 'm3u8':
+                    if (Hls.isSupported()) {
+                        const hls = new Hls(); hls.loadSource(server.url); hls.attachMedia(nativePlayer);
+                    } else if (nativePlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                        nativePlayer.src = server.url;
+                    }
+                    nativeWrapper.style.display = 'block';
+                    nativePlayer.play().catch(()=>{});
+                    break;
+                case 'mp4':
+                default:
+                    nativePlayer.src = server.url;
+                    nativeWrapper.style.display = 'block';
+                    nativePlayer.play().catch(()=>{});
+                    break;
+            }
+            loader.style.display = 'none';
+        }, 200);
     }
 
     // --- DOWNLOAD LOGIC ---
     function executeDownload() {
         if (!videoData || !videoData.download) {
-            alert("Link download belum siap atau tidak tersedia.");
-            return;
+            alert("Link download belum siap atau tidak tersedia."); return;
         }
-        // Gabungkan link download dari KV dengan IP dari URL
         const finalUrl = `${videoData.download}?ip=${userIp}`;
         window.open(finalUrl, '_blank');
     }
@@ -409,12 +446,8 @@
         if (isVideoUnlocked) {
             fetchData(videoId);
         } else {
-            // Sembunyikan loader jika gate masih aktif
             loader.style.display = 'none';
         }
-
-        // Karena sekarang hanya ada 1 source, server dropdown tidak perlu ditampilkan.
-        document.getElementById('server-group').style.display = 'none';
     })();
 
     // --- UI HELPERS (Fungsi Original Tidak Diubah) ---
@@ -424,15 +457,14 @@
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         document.getElementById('meta-theme').setAttribute('content', isDark ? '#050505' : '#f8fafc');
     }
+    function toggleServerMenu() { document.getElementById('server-list').classList.toggle('show'); }
     function toggleWaModal() {
         const modal = document.getElementById('wa-modal');
         if (modal.classList.contains('open')) { modal.classList.remove('open'); setTimeout(() => modal.style.display = 'none', 300); } 
         else { modal.style.display = 'flex'; modal.offsetHeight; modal.classList.add('open'); }
     }
     function redirectToWa() {
-        const phone = "6285126450524";
-        const url = window.location.href;
-        const userText = document.getElementById('wa-text-input').value;
+        const phone = "6285126450524"; const url = window.location.href; const userText = document.getElementById('wa-text-input').value;
         let msg = `Halo Admin, saya mau lapor/request.\n\n`;
         if(userText.trim() !== "") { msg += `*Pesan:* ${userText}\n\n`; }
         msg += `*Link Video:* ${url}`;
@@ -441,6 +473,10 @@
     }
     window.onclick = function(event) {
         if (event.target == document.getElementById('wa-modal')) toggleWaModal();
+        const serverGroup = document.getElementById('server-group');
+        if(serverGroup && !serverGroup.contains(event.target)) {
+            document.getElementById('server-list').classList.remove('show');
+        }
     }
 </script>
 </body>
