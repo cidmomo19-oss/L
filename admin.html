@@ -8,89 +8,108 @@
 </head>
 <body class="bg-gray-100 p-6 font-sans">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-6">Buat Link Rahasia</h2>
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Buat Link Rahasia</h2>
 
         <!-- Input Link Download Utuh -->
         <div class="mb-4">
-            <label class="block text-sm font-semibold mb-1">Link Download Utuh (Pixeldrain/Lainnya)</label>
-            <input type="text" id="downloadUrl" class="w-full border p-2 rounded outline-none" placeholder="Misal: https://pixeldrain.com/u/123xyz">
+            <label class="block text-sm font-semibold mb-1 text-gray-700">Link Download Utuh (Pixeldrain/Lainnya)</label>
+            <input type="text" id="downloadUrl" class="w-full border border-gray-300 p-2 rounded focus:ring-2 outline-none" placeholder="Misal: https://pixeldrain.com/u/123xyz">
         </div>
 
         <!-- Input Link Video Utuh -->
-        <label class="block text-sm font-semibold mb-2 mt-6">Link Video Utuh (Maksimal 5)</label>
+        <label class="block text-sm font-semibold mb-2 mt-6 text-gray-700">Link Video Utuh (Maksimal 5)</label>
         <div id="server-list" class="space-y-3 mb-4">
             <div class="flex gap-2 server-entry">
-                <input type="text" value="Server 1" class="s-name w-1/4 border p-2 rounded outline-none" placeholder="Nama Server">
-                <input type="text" class="s-url w-full border p-2 rounded outline-none" placeholder="Misal: https://short.icu/v/123xyz">
+                <input type="text" value="Server 1" class="s-name w-1/4 border border-gray-300 p-2 rounded outline-none" placeholder="Nama">
+                <input type="text" class="s-url w-full border border-gray-300 p-2 rounded outline-none" placeholder="Misal: https://short.icu/v/123xyz">
             </div>
         </div>
 
-        <button onclick="addServer()" class="text-sm bg-blue-100 text-blue-700 px-4 py-2 rounded font-semibold">+ Tambah Server</button>
+        <button onclick="addServer()" class="text-sm bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200 font-semibold transition">+ Tambah Server</button>
 
-        <!-- HAPUS BAGIAN INI DARI HTML -->
-<!-- 
-<div class="mt-8 border-t pt-6">
-    <label class="block text-sm font-semibold mb-2">Password Admin</label>
-    <input type="password" id="adminPass" ... >
-</div> 
--->
+        <!-- TOMBOL GENERATE (TANPA PASSWORD) -->
+        <button onclick="generateLink()" class="mt-8 w-full bg-green-600 text-white font-bold py-3 rounded hover:bg-green-700 transition shadow-lg">
+            GENERATE LINK ACAK
+        </button>
+
         <!-- Hasil Link -->
-        <div id="resultBox" class="mt-6 hidden p-4 bg-green-50 border border-green-200 rounded">
-            <p class="text-sm font-bold mb-2">Link Berhasil Dibuat!</p>
-            <input type="text" id="resultLink" class="w-full border p-2 rounded bg-white font-mono text-sm" readonly>
-            <button onclick="copyLink()" class="mt-2 text-sm bg-gray-800 text-white px-3 py-1 rounded">Copy</button>
+        <div id="resultBox" class="mt-6 hidden p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p class="text-sm text-green-800 mb-2 font-bold">Link Berhasil Dibuat!</p>
+            <input type="text" id="resultLink" class="w-full border border-green-300 p-2 rounded bg-white font-mono text-sm text-gray-800" readonly>
+            <button onclick="copyLink()" class="mt-3 text-sm bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 transition">Copy Link</button>
         </div>
     </div>
 
     <script>
         let count = 1;
+
         function addServer() {
             if(count >= 5) return alert("Maksimal 5 Server!");
             count++;
+            
             const list = document.getElementById('server-list');
             const div = document.createElement('div');
             div.className = "flex gap-2 server-entry";
             div.innerHTML = `
-                <input type="text" value="Server ${count}" class="s-name w-1/4 border p-2 rounded outline-none">
-                <input type="text" class="s-url w-full border p-2 rounded outline-none" placeholder="Link Video Utuh">
-                <button onclick="this.parentElement.remove(); count--;" class="bg-red-500 text-white px-3 py-2 rounded font-bold">X</button>
+                <input type="text" value="Server ${count}" class="s-name w-1/4 border border-gray-300 p-2 rounded outline-none" placeholder="Nama">
+                <input type="text" class="s-url w-full border border-gray-300 p-2 rounded outline-none" placeholder="Link Video Utuh">
+                <button onclick="this.parentElement.remove(); count--;" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 font-bold">X</button>
             `;
             list.appendChild(div);
         }
 
         async function generateLink() {
-    // HAPUS baris: const pass = document.getElementById('adminPass').value;
-    const dlUrl = document.getElementById('downloadUrl').value;
+            const dlUrl = document.getElementById('downloadUrl').value;
+            
+            let servers = [];
+            // Ambil semua data server yang diinput
+            document.querySelectorAll('.server-entry').forEach(e => {
+                let name = e.querySelector('.s-name').value;
+                let url = e.querySelector('.s-url').value;
+                // Hanya masukkan jika Nama dan URL terisi
+                if(name && url) servers.push({ name, url, mode: 'embed' });
+            });
 
-    let servers = [];
-    document.querySelectorAll('.server-entry').forEach(e => {
-        let name = e.querySelector('.s-name').value;
-        let url = e.querySelector('.s-url').value;
-        if(name && url) servers.push({ name, url, mode: 'embed' });
-    });
+            if(servers.length === 0) return alert("Minimal isi 1 URL Video!");
 
-    if(servers.length === 0) return alert("Minimal isi 1 URL Video!");
+            // Ubah tombol jadi loading
+            const btn = document.querySelector('button[onclick="generateLink()"]');
+            const originalText = btn.innerText;
+            btn.innerText = "Memproses...";
+            btn.disabled = true;
 
-    try {
-        let req = await fetch('/api/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            // HAPUS password dari body JSON
-            body: JSON.stringify({ servers: servers, downloadUrl: dlUrl })
-        });
+            try {
+                // Kirim ke API tanpa password
+                let req = await fetch('/api/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ servers: servers, downloadUrl: dlUrl })
+                });
 
-        let res = await req.json();
-        if(req.ok) {
-            const final = window.location.origin + "/?id=" + res.id;
-            document.getElementById('resultLink').value = final;
-            document.getElementById('resultBox').classList.remove('hidden');
-        } else { alert(res.error); }
-    } catch (e) { alert("Error jaringan."); }
-}
+                let res = await req.json();
+                
+                if(req.ok) {
+                    // Tampilkan Hasil
+                    const finalUrl = window.location.origin + "/?id=" + res.id;
+                    document.getElementById('resultLink').value = finalUrl;
+                    document.getElementById('resultBox').classList.remove('hidden');
+                } else {
+                    alert("Gagal: " + (res.error || "Terjadi kesalahan server"));
+                }
+            } catch (e) {
+                alert("Gagal menghubungi server. Pastikan internet lancar.");
+            }
+
+            // Kembalikan tombol
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
 
         function copyLink() {
             const el = document.getElementById('resultLink');
-            el.select(); document.execCommand('copy');
+            el.select();
+            document.execCommand('copy');
+            alert("Link berhasil disalin!");
         }
     </script>
 </body>
