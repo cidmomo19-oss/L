@@ -168,7 +168,7 @@
 
     </style>
 </head>
-<body data-version="v42.0-SPLIT-ID-DOWNLOAD-PLAIN">
+<body data-version="v42.0-SPLIT-ID-DOWNLOAD">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
@@ -244,20 +244,20 @@
         document.getElementById('meta-theme').setAttribute('content', '#050505');
     }
 
-    // --- 1. IP CHECKER (Muncul di URL Domain Sendiri) ---
+    // IP CHECKER
     fetch('https://api.ipify.org?format=json')
         .then(r => r.json())
         .then(d => {
-            // Manipulasi URL bar tanpa reload halaman
             const u = new URL(window.location);
-            u.searchParams.set('ip', d.ip); // Tambah &ip=IP_ASLI ke domain sendiri
+            u.searchParams.set('ip', d.ip);
             window.history.replaceState(null, '', u);
         })
         .catch(e => console.log('IP silent fail'));
 
-
-    // --- GLOBAL VARS FOR DOWNLOAD ---
-    let _downloadId = ""; // Menyimpan ID Pixeldrain asli hasil split
+    // --- GLOBAL VARS ---
+    let _downloadUrl = ""; // Menyimpan LINK UTUH download
+    let servers = [];      // Menyimpan ARRAY OBJECT link utuh video
+    let unlocked = false;
 
     // --- GATE LOGIC ---
     const LINKS = [
@@ -266,7 +266,6 @@
     ];
     const MAX = 5;
     const K_STORE = "gate_acts_" + (window.location.search || "home");
-    let unlocked = false; 
 
     function checkGate() {
         let c = parseInt(localStorage.getItem(K_STORE) || "0");
@@ -304,84 +303,68 @@
 
     // --- DOWNLOAD FUNCTION ---
     function triggerDownload() {
-        if(!_downloadId) { alert("ID Download tidak ditemukan di URL."); return; }
-        // Menggunakan ID Pixeldrain tulisan asli (Plain Text)
-        window.open(`https://pixeldrain.com/u/${_downloadId}`, '_blank');
+        if(!_downloadUrl) { alert("Link Download tidak ditemukan."); return; }
+        // Buka Link Utuh
+        window.open(_downloadUrl, '_blank');
     }
 
-    // --- INIT & PARSING ---
-    const BASE_ABYSS = "https://short.icu/"; 
-    const BASE_MINO = "https://minochinos.com/embed/";
-    let servers = [];
-    
-    (function init() {
+    // --- INIT & FETCH FROM KV ---
+    async function init() {
         const p = new URLSearchParams(window.location.search);
-        let c = 1;
+        const id = p.get('id');
 
-        // PARSING LOGIC SPLIT TITIK (Tanpa Decoder)
-        // Format: ?id=PlayerCode.PixeldrainCode
-        let rawId = p.get('id');
-        let rawVerify = p.get('verify');
+        // Jika tidak ada ID, berhenti (atau tampilkan pesan)
+        if (!id) return;
 
-        if (rawId) {
-            // Cek apakah ada titik
-            if (rawId.includes('.')) {
-                let parts = rawId.split('.');
-                let playerPart = parts[0];   // Depan titik -> Player
-                let pixelPart = parts[1];    // Belakang titik -> Download
-                
-                // Simpan bagian download ke variable global
-                _downloadId = pixelPart;
-
-                // Proses bagian Player menggunakan ID asli
-                servers.push({ name: "Server " + c++, url: BASE_ABYSS + playerPart, mode: 'embed' });
-
-            } else {
-                // Tidak ada titik, anggap cuma Player
-                servers.push({ name: "Server " + c++, url: BASE_ABYSS + rawId, mode: 'embed' });
-            }
-        }
-
-        // Support Legacy Verify (Minochinos) - Tanpa Decoder
-        if (rawVerify) {
-            if (rawVerify.includes('.')) {
-                 let parts = rawVerify.split('.');
-                 _downloadId = parts[1]; // Download
-                 servers.push({ name: "Server " + c++, url: BASE_MINO + parts[0], mode: 'embed' });
-            } else {
-                 servers.push({ name: "Server " + c++, url: BASE_MINO + rawVerify, mode: 'embed' });
-            }
-        }
-
-        checkGate();
-
-        if (servers.length > 0) {
-            const list = document.getElementById('server-list');
-            const group = document.getElementById('server-group');
+        try {
+            // Panggil API Backend (yang di-cache 1 bulan)
+            const res = await fetch(`/api/get?id=${id}`);
+            if (!res.ok) throw new Error('Video not found');
             
-            if (servers.length > 1) {
-                group.style.display = 'block'; 
-                servers.forEach((s, i) => {
-                    let d = document.createElement('div');
-                    d.className = 'server-item';
-                    d.innerText = s.name;
-                    d.onclick = () => { document.getElementById('server-list').classList.remove('show'); play(i); };
-                    list.appendChild(d);
-                });
-                document.getElementById('current-server-name').innerText = servers[0].name;
-            } else {
-                group.style.display = 'block';
-                document.getElementById('current-server-name').innerText = servers[0].name;
-                group.querySelector('svg:last-child').style.display = 'none'; 
-                group.onclick = null;
-            }
+            const data = await res.json();
+            
+            // Isi Data dari KV
+            servers = data.servers; // Array Link Utuh
+            _downloadUrl = data.downloadUrl; // Link Download Utuh
 
-            if (unlocked) play(0);
-        } else {
-            // Sembunyikan tombol download jika tidak ada ID valid
-            document.getElementById('btn-dl').style.display = 'none';
+            // Setup UI setelah data didapat
+            checkGate();
+
+            if (servers.length > 0) {
+                const list = document.getElementById('server-list');
+                const group = document.getElementById('server-group');
+                
+                if (servers.length > 1) {
+                    group.style.display = 'block'; 
+                    servers.forEach((s, i) => {
+                        let d = document.createElement('div');
+                        d.className = 'server-item';
+                        d.innerText = s.name;
+                        d.onclick = () => { document.getElementById('server-list').classList.remove('show'); play(i); };
+                        list.appendChild(d);
+                    });
+                    document.getElementById('current-server-name').innerText = servers[0].name;
+                } else {
+                    group.style.display = 'block';
+                    document.getElementById('current-server-name').innerText = servers[0].name;
+                    group.querySelector('svg:last-child').style.display = 'none'; 
+                    group.onclick = null;
+                }
+
+                if (unlocked) play(0);
+            } else {
+                // Sembunyikan tombol download jika tidak ada link
+                document.getElementById('btn-dl').style.display = 'none';
+            }
+            
+            // Sembunyikan tombol DL jika downloadUrl kosong di KV
+            if(!_downloadUrl) document.getElementById('btn-dl').style.display = 'none';
+
+        } catch (error) {
+            console.error(error);
+            // Opsional: Alert video tidak ditemukan
         }
-    })();
+    }
 
     function play(idx) {
         if (!servers[idx] || !unlocked) return;
@@ -437,6 +420,10 @@
         if (document.getElementById('server-group') && !document.getElementById('server-group').contains(e.target)) document.getElementById('server-list').classList.remove('show');
         if (e.target == document.getElementById('wa-modal')) toggleWaModal();
     }
+
+    // Jalankan Init
+    init();
+
 </script>
 </body>
 </html>
