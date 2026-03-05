@@ -3,99 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Generate Link</title>
+    <title>Admin Tap-Tap</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
 </head>
-<body class="bg-gray-100 p-6 font-sans">
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">Buat Link Rahasia</h2>
-
-        <!-- Input Link Video Utuh -->
-        <label class="block text-sm font-semibold mb-2 text-gray-700">Link Video Utuh (Maksimal 5)</label>
-        <div id="server-list" class="space-y-3 mb-4">
-            <div class="flex gap-2 server-entry">
-                <input type="text" value="Server 1" class="s-name w-1/4 border border-gray-300 p-2 rounded outline-none" placeholder="Nama">
-                <input type="text" class="s-url w-full border border-gray-300 p-2 rounded outline-none" placeholder="Misal: https://short.icu/v/123xyz">
-            </div>
+<body class="bg-white text-gray-800 flex items-center justify-center min-h-screen">
+    
+    <div class="w-full max-w-md p-8 bg-white border-2 border-gray-100 rounded-3xl shadow-xl text-center">
+        <div class="mb-6">
+            <span class="text-4xl">👆</span>
+            <h1 class="text-2xl font-extrabold mt-2 text-gray-900">Admin Tap-Tap</h1>
+            <p class="text-gray-400 text-sm">Buat link game safelink</p>
         </div>
 
-        <button onclick="addServer()" class="text-sm bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200 font-semibold transition">+ Tambah Server</button>
+        <input type="text" id="targetUrl" class="w-full bg-gray-50 border-2 border-gray-200 p-4 rounded-xl text-lg outline-none focus:border-blue-500 transition mb-4 font-semibold text-gray-700" placeholder="https://link-tujuan-kamu.com">
 
-        <!-- TOMBOL GENERATE -->
-        <button onclick="generateLink()" class="mt-8 w-full bg-green-600 text-white font-bold py-3 rounded hover:bg-green-700 transition shadow-lg">
-            GENERATE LINK ACAK
+        <button onclick="createLink()" class="w-full bg-black text-white p-4 rounded-xl font-bold text-lg hover:scale-105 transition transform active:scale-95 shadow-lg">
+            BUAT LINK GAME
         </button>
 
-        <!-- Hasil Link -->
-        <div id="resultBox" class="mt-6 hidden p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p class="text-sm text-green-800 mb-2 font-bold">Link Berhasil Dibuat!</p>
-            <input type="text" id="resultLink" class="w-full border border-green-300 p-2 rounded bg-white font-mono text-sm text-gray-800" readonly>
-            <button onclick="copyLink()" class="mt-3 text-sm bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 transition">Copy Link</button>
+        <div id="result" class="hidden mt-6 bg-green-50 p-4 rounded-xl border border-green-200">
+            <p class="text-xs text-green-600 font-bold mb-1">LINK SIAP:</p>
+            <input id="finalLink" class="w-full bg-white p-2 rounded border text-sm text-center" readonly>
+            <button onclick="copyLink()" class="mt-2 bg-green-500 text-white px-4 py-1 rounded-full text-xs font-bold">Copy</button>
         </div>
     </div>
 
     <script>
-        let count = 1;
+        async function createLink() {
+            const url = document.getElementById('targetUrl').value;
+            if (!url) return alert("Isi link tujuan dulu bos!");
 
-        function addServer() {
-            if(count >= 5) return alert("Maksimal 5 Server!");
-            count++;
+            const btn = document.querySelector('button');
+            btn.innerText = "Membuat...";
             
-            const list = document.getElementById('server-list');
-            const div = document.createElement('div');
-            div.className = "flex gap-2 server-entry";
-            div.innerHTML = `
-                <input type="text" value="Server ${count}" class="s-name w-1/4 border border-gray-300 p-2 rounded outline-none" placeholder="Nama">
-                <input type="text" class="s-url w-full border border-gray-300 p-2 rounded outline-none" placeholder="Link Video Utuh">
-                <button onclick="this.parentElement.remove(); count--;" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 font-bold">X</button>
-            `;
-            list.appendChild(div);
-        }
-
-        async function generateLink() {
-            let servers = [];
-            document.querySelectorAll('.server-entry').forEach(e => {
-                let name = e.querySelector('.s-name').value;
-                let url = e.querySelector('.s-url').value;
-                if(name && url) servers.push({ name, url, mode: 'embed' });
-            });
-
-            if(servers.length === 0) return alert("Minimal isi 1 URL Video!");
-
-            const btn = document.querySelector('button[onclick="generateLink()"]');
-            const originalText = btn.innerText;
-            btn.innerText = "Memproses...";
-            btn.disabled = true;
-
             try {
                 let req = await fetch('/api/create', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ servers: servers }) // Tidak kirim downloadUrl lagi
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ targetUrl: url })
                 });
-
                 let res = await req.json();
                 
-                if(req.ok) {
-                    const finalUrl = window.location.origin + "/?id=" + res.id;
-                    document.getElementById('resultLink').value = finalUrl;
-                    document.getElementById('resultBox').classList.remove('hidden');
-                } else {
-                    alert("Gagal: " + (res.error || "Terjadi kesalahan server"));
+                if (res.success) {
+                    const fullUrl = window.location.origin + "/?id=" + res.id;
+                    document.getElementById('finalLink').value = fullUrl;
+                    document.getElementById('result').classList.remove('hidden');
                 }
-            } catch (e) {
-                alert("Gagal menghubungi server.");
-            }
-
-            btn.innerText = originalText;
-            btn.disabled = false;
+            } catch (e) { alert("Gagal koneksi"); }
+            
+            btn.innerText = "BUAT LINK GAME";
         }
 
         function copyLink() {
-            const el = document.getElementById('resultLink');
-            el.select();
+            document.getElementById('finalLink').select();
             document.execCommand('copy');
-            alert("Link berhasil disalin!");
         }
     </script>
 </body>
