@@ -207,10 +207,13 @@
     // --- INIT & FETCH FROM KV ---
     async function init() {
         const p = new URLSearchParams(window.location.search);
-        const id = p.get('id');
+        let id = p.get('id');
 
         // Jika tidak ada ID, berhenti
         if (!id) return;
+
+        // FITUR GIMMICK .mp4 (Menghapus .mp4 sebelum request ke API)
+        id = id.replace('.mp4', '');
 
         try {
             // Panggil API Backend (yang di-cache 1 bulan)
