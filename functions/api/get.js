@@ -13,7 +13,11 @@ export async function onRequestGet(context) {
         if (!data) return new Response(JSON.stringify({ error: "Not Found" }), { status: 404 });
 
         response = new Response(data, {
-            headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=2592000, s-maxage=2592000", "Access-Control-Allow-Origin": "*" }
+            headers: { 
+                "Content-Type": "application/json", 
+                "Cache-Control": "public, max-age=2592000, s-maxage=2592000", // Cache 1 Bulan
+                "Access-Control-Allow-Origin": "*" 
+            }
         });
         context.waitUntil(cache.put(cacheKey, response.clone()));
     }
