@@ -2,13 +2,16 @@ export async function onRequestPost(context) {
     const { request, env } = context;
     try {
         const body = await request.json();
-        const randomId = Math.random().toString(36).substring(2, 8); // ID Acak
+        const id = Math.random().toString(36).substring(2, 8);
 
-        // Simpan Link Tujuan ke KV
-        await env.VIDEO_KV.put(`taptap_${randomId}`, body.targetUrl);
+        // Simpan Link Asli di Level 10 (Final)
+        // Format Key: "game_{ID}_final"
+        await env.VIDEO_KV.put(`game_${id}_final`, body.targetUrl);
 
-        return new Response(JSON.stringify({ success: true, id: randomId }), { 
-            headers: { "Content-Type": "application/json" } 
-        });
-    } catch (err) { return new Response(JSON.stringify({ error: "Gagal" }), { status: 500 }); }
+        // Buat Token Awal (Level 1)
+        const token1 = Math.random().toString(36).substring(2);
+        await env.VIDEO_KV.put(`game_${id}_1`, token1);
+
+        return new Response(JSON.stringify({ success: true, id: id, token: token1 }), { headers: { "Content-Type": "application/json" } });
+    } catch (e) { return new Response("Error", { status: 500 }); }
 }
