@@ -3,151 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Multi Server</title>
+    <title>Admin - Generate Link</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #111827; color: #d1d5db; }
-        .form-input { background-color: #1f2937; border-color: #4b5563; color: #d1d5db; }
-        .form-input:focus { border-color: #3b82f6; ring: 1; ring-color: #3b82f6; }
-        .btn-primary { background-color: #2563eb; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-secondary { background-color: #374151; }
-        .btn-danger { background-color: #dc2626; font-size: 0.8rem; padding: 4px 8px; }
-        .result-box { background-color: #1f2937; border-left: 4px solid #2563eb; }
-        .server-entry { border: 1px solid #374151; padding: 1rem; border-radius: 0.5rem; }
-    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="w-full max-w-2xl p-8 space-y-6 bg-gray-900 rounded-xl shadow-lg">
-        <div>
-            <h1 class="text-2xl font-bold text-white">Video Uploader (Multi Server)</h1>
-            <p class="text-gray-400">Generate ID dan simpan link ke KV.</p>
+<body class="bg-gray-100 p-6 font-sans">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-6">Buat Link Rahasia</h2>
+
+        <!-- Input Link Download Utuh -->
+        <div class="mb-4">
+            <label class="block text-sm font-semibold mb-1">Link Download Utuh (Pixeldrain/Lainnya)</label>
+            <input type="text" id="downloadUrl" class="w-full border p-2 rounded outline-none" placeholder="Misal: https://pixeldrain.com/u/123xyz">
         </div>
 
-        <form id="video-form" class="space-y-6">
-            <!-- Server Inputs Dinamis -->
-            <div id="server-container" class="space-y-4">
-                <!-- Server fields akan ditambahkan oleh JS -->
+        <!-- Input Link Video Utuh -->
+        <label class="block text-sm font-semibold mb-2 mt-6">Link Video Utuh (Maksimal 5)</label>
+        <div id="server-list" class="space-y-3 mb-4">
+            <div class="flex gap-2 server-entry">
+                <input type="text" value="Server 1" class="s-name w-1/4 border p-2 rounded outline-none" placeholder="Nama Server">
+                <input type="text" class="s-url w-full border p-2 rounded outline-none" placeholder="Misal: https://short.icu/v/123xyz">
             </div>
-            <button type="button" id="add-server-btn" class="w-full btn-secondary text-white font-bold py-2 px-4 rounded-md">Tambah Server</button>
-
-            <!-- Input Tetap -->
-            <div>
-                <label for="download-input" class="block text-sm font-medium">Link Download (Pixeldrain)</label>
-                <input type="url" id="download-input" required class="form-input mt-1 block w-full rounded-md shadow-sm" placeholder="https://pixeldrain.com/u/xxxxxx">
-            </div>
-             <div>
-                <label for="password-input" class="block text-sm font-medium">Password Admin</label>
-                <input type="password" id="password-input" required class="form-input mt-1 block w-full rounded-md shadow-sm" placeholder="••••••••">
-            </div>
-
-            <button type="submit" id="submit-btn" class="w-full btn-primary text-white font-bold py-2 px-4 rounded-md">
-                Generate & Save
-            </button>
-        </form>
-
-        <div id="result-area" class="hidden mt-6">
-            <h3 class="font-semibold text-green-400">Sukses! Link berhasil dibuat:</h3>
-            <div class="result-box p-4 mt-2 rounded-md">
-                <code id="final-url" class="text-sm text-yellow-300 break-all"></code>
-            </div>
-            <button onclick="copyToClipboard()" class="mt-2 w-full text-sm text-center py-2 bg-gray-700 hover:bg-gray-600 rounded-md">Copy Link</button>
         </div>
-        <div id="error-area" class="hidden mt-4 text-sm text-red-400"></div>
+
+        <button onclick="addServer()" class="text-sm bg-blue-100 text-blue-700 px-4 py-2 rounded font-semibold">+ Tambah Server</button>
+
+        <div class="mt-8 border-t pt-6">
+            <label class="block text-sm font-semibold mb-2">Password Admin</label>
+            <input type="password" id="adminPass" class="w-full border p-2 rounded outline-none" placeholder="Masukkan password...">
+        </div>
+
+        <button onclick="generateLink()" class="mt-6 w-full bg-green-600 text-white font-bold py-3 rounded">GENERATE LINK ACAK</button>
+
+        <!-- Hasil Link -->
+        <div id="resultBox" class="mt-6 hidden p-4 bg-green-50 border border-green-200 rounded">
+            <p class="text-sm font-bold mb-2">Link Berhasil Dibuat!</p>
+            <input type="text" id="resultLink" class="w-full border p-2 rounded bg-white font-mono text-sm" readonly>
+            <button onclick="copyLink()" class="mt-2 text-sm bg-gray-800 text-white px-3 py-1 rounded">Copy</button>
+        </div>
     </div>
 
     <script>
-        const serverContainer = document.getElementById('server-container');
-        const addServerBtn = document.getElementById('add-server-btn');
-        let serverCount = 0;
-
-        function addServerInput() {
-            serverCount++;
-            const serverId = `server-${serverCount}`;
-            const serverHtml = `
-                <div id="${serverId}" class="server-entry relative">
-                    <h3 class="font-semibold mb-2 text-gray-300">Server ${serverCount}</h3>
-                    <button type="button" onclick="removeServer('${serverId}')" class="absolute top-3 right-3 btn-danger rounded-md">Hapus</button>
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div class="md:col-span-3">
-                            <label class="block text-xs font-medium">Link Video</label>
-                            <input type="url" name="src" required class="form-input mt-1 block w-full rounded-md shadow-sm" placeholder="https://server.com/file.mp4">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-medium">Tipe</label>
-                            <select name="type" class="form-input mt-1 block w-full rounded-md shadow-sm">
-                                <option value="embed">Embed</option>
-                                <option value="mp4" selected>MP4</option>
-                                <option value="m3u8">M3U8</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+        let count = 1;
+        function addServer() {
+            if(count >= 5) return alert("Maksimal 5 Server!");
+            count++;
+            const list = document.getElementById('server-list');
+            const div = document.createElement('div');
+            div.className = "flex gap-2 server-entry";
+            div.innerHTML = `
+                <input type="text" value="Server ${count}" class="s-name w-1/4 border p-2 rounded outline-none">
+                <input type="text" class="s-url w-full border p-2 rounded outline-none" placeholder="Link Video Utuh">
+                <button onclick="this.parentElement.remove(); count--;" class="bg-red-500 text-white px-3 py-2 rounded font-bold">X</button>
             `;
-            serverContainer.insertAdjacentHTML('beforeend', serverHtml);
+            list.appendChild(div);
         }
 
-        function removeServer(serverId) {
-            document.getElementById(serverId).remove();
-        }
+        async function generateLink() {
+            const pass = document.getElementById('adminPass').value;
+            const dlUrl = document.getElementById('downloadUrl').value;
+            if(!pass) return alert("Password wajib!");
 
-        addServerBtn.addEventListener('click', addServerInput);
-        // Tambahkan satu input server saat halaman pertama kali dibuka
-        document.addEventListener('DOMContentLoaded', addServerInput);
-        
-        // Handle Form Submission
-        const form = document.getElementById('video-form');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const servers = [];
-            document.querySelectorAll('.server-entry').forEach(entry => {
-                servers.push({
-                    url: entry.querySelector('input[name="src"]').value,
-                    type: entry.querySelector('select[name="type"]').value
-                });
+            let servers = [];
+            document.querySelectorAll('.server-entry').forEach(e => {
+                let name = e.querySelector('.s-name').value;
+                let url = e.querySelector('.s-url').value;
+                if(name && url) servers.push({ name, url, mode: 'embed' });
             });
 
-            const data = {
-                servers,
-                download: document.getElementById('download-input').value,
-                password: document.getElementById('password-input').value
-            };
-            
-            const submitBtn = document.getElementById('submit-btn');
-            const resultArea = document.getElementById('result-area');
-            const errorArea = document.getElementById('error-area');
-            const finalUrlEl = document.getElementById('final-url');
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Menyimpan...';
-            resultArea.classList.add('hidden');
-            errorArea.classList.add('hidden');
+            if(servers.length === 0) return alert("Minimal isi 1 URL Video!");
 
             try {
-                const response = await fetch('/api/add', {
+                let req = await fetch('/api/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ password: pass, servers: servers, downloadUrl: dlUrl })
                 });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.error || 'Terjadi kesalahan');
 
-                const playerUrl = `${window.location.origin}/?id=${result.id}&ip=USER_IP_DISINI`;
-                finalUrlEl.textContent = playerUrl;
-                resultArea.classList.remove('hidden');
-            } catch (err) {
-                errorArea.textContent = `Error: ${err.message}`;
-                errorArea.classList.remove('hidden');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Generate & Save';
-            }
-        });
+                let res = await req.json();
+                if(req.ok) {
+                    const final = window.location.origin + "/?id=" + res.id;
+                    document.getElementById('resultLink').value = final;
+                    document.getElementById('resultBox').classList.remove('hidden');
+                } else { alert(res.error); }
+            } catch (e) { alert("Error jaringan."); }
+        }
 
-        function copyToClipboard() {
-            navigator.clipboard.writeText(document.getElementById('final-url').textContent);
-            alert('Link berhasil disalin!');
+        function copyLink() {
+            const el = document.getElementById('resultLink');
+            el.select(); document.execCommand('copy');
         }
     </script>
 </body>
