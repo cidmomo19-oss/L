@@ -1,17 +1,23 @@
 export async function onRequestPost(context) {
     const { request, env } = context;
+
     try {
         const body = await request.json();
-        const id = Math.random().toString(36).substring(2, 8);
+        
+        // Generate ID Acak
+        const randomId = Math.random().toString(36).substring(2, 8);
 
-        // Simpan Link Asli di Level 10 (Final)
-        // Format Key: "game_{ID}_final"
-        await env.VIDEO_KV.put(`game_${id}_final`, body.targetUrl);
+        // Hanya simpan data server video
+        const videoData = {
+            servers: body.servers 
+        };
 
-        // Buat Token Awal (Level 1)
-        const token1 = Math.random().toString(36).substring(2);
-        await env.VIDEO_KV.put(`game_${id}_1`, token1);
+        await env.VIDEO_KV.put(`vid_${randomId}`, JSON.stringify(videoData));
 
-        return new Response(JSON.stringify({ success: true, id: id, token: token1 }), { headers: { "Content-Type": "application/json" } });
-    } catch (e) { return new Response("Error", { status: 500 }); }
+        return new Response(JSON.stringify({ success: true, id: randomId }), {
+            headers: { "Content-Type": "application/json" }
+        });
+    } catch (err) {
+        return new Response(JSON.stringify({ error: "Server Error" }), { status: 500 });
+    }
 }
