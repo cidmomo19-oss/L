@@ -144,16 +144,9 @@
         body.dark-mode .icon-moon { display: none; }
 
         /* WA MODAL */
-        #wa-modal {
-            display: none; position: fixed; inset: 0; z-index: 9999;
-            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
-            align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
-        }
+        #wa-modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
         #wa-modal.open { display: flex; opacity: 1; }
-        .wa-modal-content {
-            background: #fff; width: 90%; max-width: 380px; border-radius: 16px; padding: 24px;
-            border: 1px solid #e2e8f0; transform: scale(0.95); transition: transform 0.3s ease;
-        }
+        .wa-modal-content { background: #fff; width: 90%; max-width: 380px; border-radius: 16px; padding: 24px; border: 1px solid #e2e8f0; transform: scale(0.95); transition: transform 0.3s ease; }
         #wa-modal.open .wa-modal-content { transform: scale(1); }
         .wa-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
         .step-num { width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #475569; flex-shrink: 0; }
@@ -168,7 +161,7 @@
 
     </style>
 </head>
-<body data-version="v43.0-NATIVE-MP4-ADS">
+<body data-version="v44.0-AGGRESSIVE-ADS">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
@@ -193,7 +186,7 @@
 
 <div id="content-wrapper">
     <div class="player-container">
-        <!-- GATE (3x Klik Tab Baru) -->
+        <!-- GATE (3x Klik Tab Baru + Tab Lama) -->
         <div id="video-gate" onclick="processGateClick()">
             <div class="gate-msg">Klik Play <span>3 Kali</span><br>Untuk Membuka Video</div>
             <div class="play-trigger">
@@ -274,17 +267,15 @@
     function getState() {
         try {
             let state = JSON.parse(localStorage.getItem(getSaveKey()));
-            // Jika data masih ada dan belum lewat 1 jam
             if (state && (Date.now() - state.time < EXPIRY_TIME)) {
                 return state;
             }
         } catch(e) {}
-        // Jika belum ada / kadaluarsa, reset ke 0
         return { gateClicks: 0, postAds: 0, time: Date.now() };
     }
 
     function saveState(state) {
-        state.time = Date.now(); // Perbarui waktu saat save
+        state.time = Date.now();
         localStorage.setItem(getSaveKey(), JSON.stringify(state));
     }
 
@@ -312,26 +303,30 @@
         }
     }
 
-    // --- GATE CLICK (Buka Tab Baru) ---
+    // --- GATE CLICK (SETIAP KLIK: TAB BARU IKLAN & TAB LAMA IKLAN) ---
     function processGateClick() {
         let state = getState();
         if (state.gateClicks < MAX_GATE_CLICKS) {
+            // Ambil link iklan dari array
             let l1 = AD_LINKS[state.gateClicks % AD_LINKS.length];
+            let l2 = AD_LINKS[(state.gateClicks + 1) % AD_LINKS.length];
+            
             state.gateClicks++;
             saveState(state);
             
             updateGateUI();
 
-            // Klik Gate Selalu Buka di Tab Baru agar tidak mengganggu progress klik user
+            // 1. Buka Tab Baru (Iklan)
             window.open(l1, '_blank');
-
-            if (state.gateClicks >= MAX_GATE_CLICKS && servers.length > 0) {
-                play(0); 
-            }
+            // 2. Tab Lama (Halaman ini) Redirect ke Iklan
+            window.location.href = l2; 
+            
+            // Note: Karena diredirect, user harus klik "Back" buat ngelanjutin.
+            // Pas user klik back, script init() akan jalan dan ngecek state-nya lagi.
         }
     }
 
-    // --- POST AD CLICK (Buka di Tab Utama) ---
+    // --- POST AD CLICK (SAAT PLAYER TERBUKA: BUKA DI HALAMAN UTAMA AJA, TANPA TAB BARU) ---
     function processPostAdClick() {
         let state = getState();
         if (state.postAds < MAX_POST_ADS) {
@@ -389,6 +384,7 @@
                     group.onclick = null;
                 }
 
+                // Langsung putar/muat player jika kuncinya (Gate) sudah terbuka
                 if (unlocked) play(0);
             }
 
@@ -415,11 +411,12 @@
         ifr.style.display = 'none';
 
         setTimeout(() => {
-            // Deteksi otomatis jika URL adalah .mp4 gunakan Native Video, jika bukan pakai Iframe
+            // Deteksi otomatis jika URL mengandung .mp4 gunakan Native Video (<video>), jika tidak gunakan iframe
             if (s.url.toLowerCase().includes('.mp4')) {
                 wrapperNative.style.display = 'block';
                 vid.src = s.url;
                 vid.load();
+                // video.play() dikasih catch karena browser suka nge-blok autoplay
                 vid.play().catch(()=>{});
             } else {
                 ifr.style.display = 'block';
@@ -454,7 +451,7 @@
         if (e.target == document.getElementById('wa-modal')) toggleWaModal();
     }
 
-    // Jalankan Init
+    // Jalankan Init saat halaman terbuka
     init();
 
 </script>
