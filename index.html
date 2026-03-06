@@ -161,7 +161,7 @@
 
     </style>
 </head>
-<body data-version="v45.0-AGGRESSIVE-ADS">
+<body data-version="v47.0-ANTI-SPAM-ADS">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
@@ -256,10 +256,11 @@
         "https://fishermanwithavenge.com/bmaye227ji?key=21143f6352edf65a6b64615e9bb37bb9" 
     ];
     const MAX_GATE_CLICKS = 3;
-    const MAX_POST_ADS = 2; // IKLAN PASCA PLAYER DITETAPKAN 2 KALI
+    const MAX_POST_ADS = 2; // Iklan player setelah unlock
     const EXPIRY_TIME = 60 * 60 * 1000; // 1 Jam dalam milidetik
+    const COOLDOWN_TIME = 3000; // 3 DETIK (Waktu tunggu anti-spam back)
 
-    // --- STATE MANAGEMENT (Histori Klik & Waktu 1 Jam) ---
+    // --- STATE MANAGEMENT ---
     function getSaveKey() {
         return "vid_state_" + cleanId;
     }
@@ -271,7 +272,9 @@
                 return state;
             }
         } catch(e) {}
-        return { gateClicks: 0, postAds: 0, time: Date.now() };
+        
+        // lastClickTime disimpan untuk ngetrack kapan terakhir user neken tombol
+        return { gateClicks: 0, postAds: 0, time: Date.now(), lastClickTime: 0 };
     }
 
     function saveState(state) {
@@ -279,7 +282,7 @@
         localStorage.setItem(getSaveKey(), JSON.stringify(state));
     }
 
-    // --- UPDATE UI BERDASARKAN STATE ---
+    // --- UPDATE UI ---
     function updateGateUI() {
         let state = getState();
         const gateEl = document.getElementById('video-gate');
@@ -289,8 +292,6 @@
             gateEl.style.display = 'none';
             unlocked = true;
             
-            // Cek apakah post ad (iklan player tab utama) masih ada sisa klik
-            // KARENA DITETAPKAN MAX 2, IKLAN INI AKAN MUNCUL 2 KALI
             if (state.postAds < MAX_POST_ADS) {
                 overlayEl.style.display = 'block';
             } else {
@@ -304,15 +305,22 @@
         }
     }
 
-    // --- GATE CLICK (SETIAP KLIK: TAB BARU IKLAN & TAB LAMA IKLAN) ---
+    // --- GATE CLICK DENGAN LOGIKA COOLDOWN 3 DETIK ---
     function processGateClick() {
         let state = getState();
+        let currentTime = Date.now();
+
+        // JIKA USER KLIK KURANG DARI 3 DETIK DARI KLIK SEBELUMNYA, ABAIKAN SAJA.
+        if (currentTime - state.lastClickTime < COOLDOWN_TIME) {
+            return; // Diem aja, gak terjadi apa-apa
+        }
+
         if (state.gateClicks < MAX_GATE_CLICKS) {
-            // Ambil link iklan dari array
             let l1 = AD_LINKS[state.gateClicks % AD_LINKS.length];
             let l2 = AD_LINKS[(state.gateClicks + 1) % AD_LINKS.length];
             
             state.gateClicks++;
+            state.lastClickTime = currentTime; // Catat waktu klik terbaru
             saveState(state);
             
             updateGateUI();
@@ -320,8 +328,7 @@
             // 1. Buka Tab Baru (Iklan)
             window.open(l1, '_blank');
             
-            // JIKA BELUM 3 KLIK, TAB LAMA REDIRECT IKLAN
-            // TAPI JIKA PAS KLIK KE-3, TAB LAMA BUKA PLAYER, JADI GAK PERLU REDIRECT.
+            // 2. Tab Lama Redirect Iklan (Kecuali kalau udah masuk klik ke-3)
             if(state.gateClicks < MAX_GATE_CLICKS) {
                 window.location.href = l2; 
             } else if (servers.length > 0) {
@@ -330,17 +337,24 @@
         }
     }
 
-    // --- POST AD CLICK (2 KALI KLIK: REDIRECT DI HALAMAN UTAMA AJA TANPA TAB BARU) ---
+    // --- POST AD CLICK (JUGA DIBERI COOLDOWN 3 DETIK BIAR GAK KEPENCET DOBEL) ---
     function processPostAdClick() {
         let state = getState();
+        let currentTime = Date.now();
+
+        if (currentTime - state.lastClickTime < COOLDOWN_TIME) {
+            return;
+        }
+
         if (state.postAds < MAX_POST_ADS) {
             let l1 = AD_LINKS[state.postAds % AD_LINKS.length];
             state.postAds++;
+            state.lastClickTime = currentTime; // Catat waktu klik
             saveState(state);
             
             updateGateUI();
             
-            // Redirect langsung di tab utama (self)
+            // Redirect di tab utama
             window.location.href = l1;
         }
     }
@@ -351,14 +365,12 @@
         let rawId = p.get('id');
         if (!rawId) return;
 
-        // Gimmick .mp4 (Bisa tambah .mp4 di URL tanpa error)
         cleanId = rawId;
         if (cleanId.endsWith('.mp4')) {
             cleanId = cleanId.slice(0, -4);
         }
 
         try {
-            // Panggil API Backend menggunakan cleanId
             const res = await fetch(`/api/get?id=${cleanId}`);
             if (!res.ok) throw new Error('Video not found');
             
@@ -388,7 +400,6 @@
                     group.onclick = null;
                 }
 
-                // Langsung putar/muat player jika kuncinya (Gate) sudah terbuka
                 if (unlocked) play(0);
             }
 
@@ -415,12 +426,10 @@
         ifr.style.display = 'none';
 
         setTimeout(() => {
-            // Deteksi otomatis jika URL mengandung .mp4 gunakan Native Video (<video>), jika tidak gunakan iframe
             if (s.url.toLowerCase().includes('.mp4')) {
                 wrapperNative.style.display = 'block';
                 vid.src = s.url;
                 vid.load();
-                // video.play() dikasih catch karena browser suka nge-blok autoplay
                 vid.play().catch(()=>{});
             } else {
                 ifr.style.display = 'block';
@@ -455,7 +464,6 @@
         if (e.target == document.getElementById('wa-modal')) toggleWaModal();
     }
 
-    // Jalankan Init saat halaman terbuka
     init();
 
 </script>
