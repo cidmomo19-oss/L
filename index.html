@@ -16,178 +16,79 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            color: #0f172a;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            overflow-x: hidden;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        /* DARK MODE */
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         body.dark-mode { background-color: #050505; color: #e5e5e5; }
+        
+        /* Dark Mode Overrides */
         body.dark-mode .wa-modal-content { background-color: #1e1e1e; border-color: #333; color: #fff; }
-        body.dark-mode .wa-modal-content h3 { color: #ffffff; }
-        body.dark-mode .step-text { color: #cbd5e1; }
-        body.dark-mode .step-text strong { color: #ffffff; }
-        body.dark-mode .wa-input-label { color: #cbd5e1; }
         body.dark-mode .step-num { background: #333; color: #fff; }
-        body.dark-mode textarea.wa-textarea { background-color: #1e293b; border-color: #334155; color: #ffffff; }
-        body.dark-mode .btn-wa-cancel { color: #e2e8f0; border-color: #475569; }
-        body.dark-mode .btn-wa-cancel:hover { background: #334155; }
-        body.dark-mode .btn-icon-only { background: #1e293b; border-color: #334155; color: #f8fafc; }
-        body.dark-mode .btn-server { background: #1e293b; border-color: #334155; color: #f8fafc; }
+        body.dark-mode .btn-icon-only, body.dark-mode .btn-server { background: #1e293b; border-color: #334155; color: #f8fafc; }
         body.dark-mode .server-dropdown { background: #1e293b; border-color: #334155; }
         body.dark-mode .server-item { color: #cbd5e1; border-bottom-color: #334155; }
         body.dark-mode .server-item:hover { background: #334155; color: #fff; }
-        body.dark-mode .server-item.active { background: #1e3a8a; color: #fff; }
 
-        #content-wrapper {
-            width: 95%; max-width: 854px;
-            display: flex; flex-direction: column; align-items: center;
-            z-index: 10; padding-bottom: 50px; margin-top: 10px;
-        }
-
+        #content-wrapper { width: 95%; max-width: 854px; display: flex; flex-direction: column; align-items: center; z-index: 10; padding-bottom: 50px; margin-top: 10px; }
+        
         .player-container {
-            width: 100%; aspect-ratio: 16 / 9;
-            background: #000; border-radius: 12px; 
-            overflow: hidden; position: relative; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; 
+            overflow: hidden; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             z-index: 20; display: flex; align-items: center; justify-content: center;
         }
-        
         video, iframe { width: 100%; height: 100%; object-fit: contain; border: none; }
 
-        /* LOADER */
-        #embed-loader {
-            position: absolute; inset: 0; background: #000; z-index: 15; 
-            display: none; align-items: center; justify-content: center;
-        }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* GATE (Safe Name) */
+        /* GATE */
         #video-gate {
-            position: absolute; inset: 0; z-index: 50; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); cursor: pointer;
-            color: #ffffff; font-family: 'Inter', sans-serif;
+            position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.85); 
+            backdrop-filter: blur(5px); cursor: pointer; color: #fff;
         }
-        .gate-msg {
-            font-size: 16px; font-weight: 700; margin-bottom: 24px; text-align: center;
-            text-transform: uppercase; letter-spacing: 1px; color: #f8fafc;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5); padding: 0 15px; line-height: 1.4;
-        }
-        .gate-msg span { color: #3b82f6; }
-        
         .play-trigger {
-            width: 75px; height: 75px; background: rgba(37, 99, 235, 0.95);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: #fff; box-shadow: 0 0 25px rgba(37, 99, 235, 0.6);
-            transition: transform 0.1s; animation: pulse 2s infinite;
+            width: 70px; height: 70px; background: #2563eb; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(37,99,235,0.6); animation: pulse 2s infinite;
         }
-        .play-trigger svg { width: 36px; height: 36px; transform: translateX(2px); }
-        #video-gate:active .play-trigger { transform: scale(0.9); }
-        
-        .gate-counter {
-            margin-top: 24px; font-size: 15px; font-weight: 600;
-            background: rgba(255,255,255,0.1); padding: 8px 20px;
-            border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
-        }
+        .gate-counter { margin-top: 20px; font-weight: 700; background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 20px; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
 
         /* TOOLBAR */
-        #tools-container {
-            width: 100%; display: flex; flex-direction: row; align-items: flex-start;
-            margin-top: 12px; z-index: 30; position: relative;
+        #tools-container { width: 100%; display: flex; margin-top: 12px; position: relative; }
+        .btn-icon-only, .btn-server {
+            height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; 
+            background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-        .tools-left { display: flex; gap: 5px; margin-right: auto; }
-        .btn-icon-only {
-            width: 42px; height: 42px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; transition: all 0.2s;
-        }
-        .server-wrapper { position: relative; display: none; margin-left: auto; }
-        .btn-server {
-            height: 42px; padding: 0 16px; border-radius: 10px;
-            border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            font-weight: 600; font-size: 13px; cursor: pointer;
-        }
+        .btn-icon-only { width: 42px; margin-right: 8px; }
+        .btn-server { padding: 0 16px; font-size: 13px; font-weight: 600; margin-left: auto; gap: 8px; }
+        
         .server-dropdown {
-            position: absolute; top: 50px; right: 0;
-            background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; width: 140px;
-            display: none; flex-direction: column; overflow: hidden; z-index: 100;
+            position: absolute; top: 50px; right: 0; background: #fff; border: 1px solid #cbd5e1; 
+            border-radius: 10px; width: 140px; display: none; flex-direction: column; z-index: 100;
         }
         .server-dropdown.show { display: flex; }
-        .server-item { padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; border-bottom: 1px solid #f1f5f9; }
-        .server-item:last-child { border-bottom: none; }
-        .server-item.active { background: #eff6ff; color: #2563eb; }
+        .server-item { padding: 10px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         
-        .icon-sun { display: none; }
-        .icon-moon { display: block; }
-        body.dark-mode .icon-sun { display: block; }
-        body.dark-mode .icon-moon { display: none; }
+        .icon-sun { display: none; } .icon-moon { display: block; }
+        body.dark-mode .icon-sun { display: block; } body.dark-mode .icon-moon { display: none; }
 
+        /* OVERLAY POST-AD */
+        #post-ad-overlay { position: absolute; inset: 0; z-index: 45; display: none; cursor: pointer; background: transparent; }
+        
         /* WA MODAL */
-        #wa-modal {
-            display: none; position: fixed; inset: 0; z-index: 9999;
-            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
-            align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
-        }
-        #wa-modal.open { display: flex; opacity: 1; }
-        .wa-modal-content {
-            background: #fff; width: 90%; max-width: 380px; border-radius: 16px; padding: 24px;
-            border: 1px solid #e2e8f0; transform: scale(0.95); transition: transform 0.3s ease;
-        }
-        #wa-modal.open .wa-modal-content { transform: scale(1); }
-        .wa-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
-        .step-num { width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #475569; flex-shrink: 0; }
-        .step-text { font-size: 13px; color: #334155; line-height: 1.5; text-align: left; }
-        .step-text strong { color: #0f172a; }
-        .wa-input-area { margin-top: 15px; margin-bottom: 10px; }
-        .wa-input-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; color: #64748b; }
-        .wa-textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: 'Inter', sans-serif; font-size: 13px; background: #f8fafc; outline: none; resize: none; height: 70px; }
-        .wa-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-wa-cancel { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: transparent; color: #64748b; font-weight: 600; font-size: 13px; cursor: pointer; }
-        .btn-wa-go { flex: 1.5; padding: 10px; border-radius: 8px; border: none; background: #22c55e; color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
-
+        #wa-modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        #wa-modal.open { display: flex; }
+        .wa-modal-content { background: #fff; width: 90%; max-width: 380px; border-radius: 16px; padding: 20px; }
+        .wa-textarea { width: 100%; border: 1px solid #ccc; padding: 8px; border-radius: 8px; margin: 10px 0; }
+        .btn-wa-go { background: #22c55e; color: #fff; padding: 8px 16px; border-radius: 8px; width: 100%; }
     </style>
 </head>
-<body data-version="v50.0-ORIGINAL-DESIGN-FIXED">
+<body data-version="v51.0-STRICT-TIME-CHECK">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
     <div class="wa-modal-content">
-        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-            </svg>
-            Lapor / Request
-        </h3>
-        <div class="wa-step"><div class="step-num">1</div><div class="step-text"><strong>Screenshot</strong> layar jika error.</div></div>
-        <div class="wa-step"><div class="step-num">2</div><div class="step-text">Tulis detail masalah atau <strong>Video</strong> request:</div></div>
-        <div class="wa-input-area">
-            <label class="wa-input-label">Pesan Tambahan:</label>
-            <textarea id="wa-text-input" class="wa-textarea" placeholder="Contoh: Link mati / Request anu"></textarea>
-        </div>
-        <div class="wa-actions">
-            <button class="btn-wa-cancel" onclick="toggleWaModal()">Tutup</button>
-            <button class="btn-wa-go" onclick="redirectToWa()">Chat Admin</button>
-        </div>
+        <h3 class="font-bold mb-4">Lapor Masalah</h3>
+        <textarea id="wa-text-input" class="wa-textarea" placeholder="Detail masalah..."></textarea>
+        <button class="btn-wa-go" onclick="redirectToWa()">Kirim ke Admin</button>
+        <button style="margin-top:10px; width:100%; color:#666;" onclick="document.getElementById('wa-modal').classList.remove('open')">Tutup</button>
     </div>
 </div>
 
@@ -195,241 +96,230 @@
     <div class="player-container">
         <!-- GATE (3x Klik) -->
         <div id="video-gate" onclick="processGateClick()">
-            <div class="gate-msg">Klik Play <span>3 Kali</span><br>Untuk Membuka Video</div>
+            <div style="font-weight:700; text-align:center; margin-bottom:15px;">Klik Play <span style="color:#3b82f6;">3 Kali</span><br>Untuk Membuka Video</div>
             <div class="play-trigger">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" /></svg>
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             </div>
             <div class="gate-counter" id="counter-display">0 / 3</div>
         </div>
 
         <!-- OVERLAY POST-AD (Duplikat Tab) -->
-        <div id="post-ad-overlay" onclick="processPostAdClick()" style="position:absolute; inset:0; z-index:45; display:none; cursor:pointer;"></div>
+        <div id="post-ad-overlay" onclick="processPostAdClick()"></div>
 
-        <div id="embed-loader"><div class="spinner"></div></div>
-        
-        <!-- NATIVE -->
+        <!-- PLAYER -->
         <div id="native-player-wrapper" style="width:100%; height:100%; display:none;">
-            <video id="player" controls playsinline preload="none" style="width:100%; height:100%; object-fit:contain;"></video>
+            <video id="player" controls playsinline preload="none" style="width:100%; height:100%;"></video>
         </div>
-        <!-- IFRAME -->
-        <iframe id="iframe-player" allowfullscreen allow="autoplay; fullscreen" style="display:none; width:100%; height:100%; border:none;"></iframe>
+        <iframe id="iframe-player" allowfullscreen style="display:none; width:100%; height:100%; border:none;"></iframe>
     </div>
 
     <div id="tools-container">
-        <div class="tools-left">
-            <button class="btn-icon-only" onclick="toggleTheme()" title="Ganti Mode">
-                <svg class="icon-moon" style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                <svg class="icon-sun" style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            </button>
-            <button class="btn-icon-only" onclick="toggleWaModal()" title="Lapor Masalah">
-                <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-            </button>
-        </div>
+        <button class="btn-icon-only" onclick="toggleTheme()">
+            <svg class="icon-moon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
+            <svg class="icon-sun" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        </button>
+        <button class="btn-icon-only" onclick="document.getElementById('wa-modal').classList.add('open')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </button>
 
-        <div id="server-group" class="server-wrapper">
-            <button class="btn-server" onclick="toggleServerMenu()">
-                <span id="current-server-name">Pilih Server</span>
-                <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        <div id="server-group" style="margin-left:auto; position:relative; display:none;">
+            <button class="btn-server" onclick="document.getElementById('server-list').classList.toggle('show')">
+                <span id="current-server-name">Server</span>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="server-list" class="server-dropdown"></div>
         </div>
     </div>
+</div>
 
 <script>
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('meta-theme').setAttribute('content', '#050505');
-    }
-
-    // IP CHECKER
-    fetch('https://api.ipify.org?format=json')
-        .then(r => r.json())
-        .then(d => {
-            const u = new URL(window.location);
-            u.searchParams.set('ip', d.ip);
-            window.history.replaceState(null, '', u);
-        })
-        .catch(e => console.log('IP silent fail'));
-
-    // --- GLOBAL VARS ---
-    let servers = [];
-    let unlocked = false;
-    let cleanId = "";
-
-    // --- ADS & CONFIG ---
+    // --- KONFIGURASI ---
     const AD_LINKS = [
         "https://omg10.com/4/10390860", 
         "https://fishermanwithavenge.com/bmaye227ji?key=21143f6352edf65a6b64615e9bb37bb9" 
     ];
     const MAX_GATE_CLICKS = 3;
-    const MAX_POST_ADS = 2; // Iklan Duplikat Tab
-    const EXPIRY_TIME = 60 * 60 * 1000; 
-    const COOLDOWN_TIME = 3000; // 3 Detik
+    const MAX_POST_ADS = 2; 
+    const COOLDOWN_TIME = 3000; // 3 Detik (Min waktu di halaman iklan)
+    const EXPIRY_TIME = 60 * 60 * 1000; // 1 Jam
 
+    // GLOBAL VARS
+    let servers = [];
+    let cleanId = "";
+    
     // --- STATE MANAGEMENT ---
-    function getSaveKey() { return "vid_state_" + cleanId; }
-
+    function getSaveKey() { return "vid_state_" + (cleanId || "home"); }
+    
     function getState() {
         try {
-            let state = JSON.parse(localStorage.getItem(getSaveKey()));
-            if (state && (Date.now() - state.time < EXPIRY_TIME)) return state;
+            let s = JSON.parse(localStorage.getItem(getSaveKey()));
+            if (s && (Date.now() - s.time < EXPIRY_TIME)) return s;
         } catch(e) {}
-        return { gateClicks: 0, postAds: 0, time: Date.now(), lastClickTime: 0 };
+        // pendingAction: 'gate' | 'post' | null
+        // lastClickTime: Kapan user ngeklik tombol (untuk dihitung saat kembali)
+        return { gate: 0, post: 0, time: Date.now(), pendingAction: null, lastClickTime: 0 };
+    }
+    
+    function saveState(s) {
+        s.time = Date.now(); // Perbarui waktu aktif
+        localStorage.setItem(getSaveKey(), JSON.stringify(s));
     }
 
-    function saveState(state) {
-        state.time = Date.now();
-        localStorage.setItem(getSaveKey(), JSON.stringify(state));
+    // --- CHECK COOLDOWN SAAT HALAMAN DIMUAT (USER KEMBALI) ---
+    function checkCooldownOnLoad() {
+        let s = getState();
+        
+        // Jika ada status PENDING (artinya user habis ngeklik dan balik lagi)
+        if (s.pendingAction) {
+            let diff = Date.now() - s.lastClickTime; // Hitung selisih waktu
+            
+            if (diff >= COOLDOWN_TIME) {
+                // Lolos waktu tunggu -> Tambahkan Counter
+                if (s.pendingAction === 'gate' && s.gate < MAX_GATE_CLICKS) {
+                    s.gate++;
+                } else if (s.pendingAction === 'post' && s.post < MAX_POST_ADS) {
+                    s.post++;
+                }
+            } else {
+                // Kecepetan -> GAK NAMBAH (Silent fail)
+            }
+
+            // Reset status pending
+            s.pendingAction = null;
+            saveState(s);
+        }
     }
 
     // --- UI UPDATE ---
-    function updateGateUI() {
-        let state = getState();
-        const gateEl = document.getElementById('video-gate');
-        const overlayEl = document.getElementById('post-ad-overlay');
+    function updateUI() {
+        let s = getState();
+        const gate = document.getElementById('video-gate');
+        const overlay = document.getElementById('post-ad-overlay');
+        const counter = document.getElementById('counter-display');
 
-        if (state.gateClicks >= MAX_GATE_CLICKS) {
-            gateEl.style.display = 'none';
-            unlocked = true;
-            
-            // Tampilkan Overlay Iklan jika jatah iklan masih ada
-            if (state.postAds < MAX_POST_ADS) {
-                overlayEl.style.display = 'block';
-            } else {
-                overlayEl.style.display = 'none';
-            }
+        if (s.gate >= MAX_GATE_CLICKS) {
+            gate.style.display = 'none';
+            // Logic Overlay Iklan Duplikat
+            overlay.style.display = (s.post < MAX_POST_ADS) ? 'block' : 'none';
         } else {
-            gateEl.style.display = 'flex';
-            document.getElementById('counter-display').innerText = state.gateClicks + " / " + MAX_GATE_CLICKS;
-            overlayEl.style.display = 'none';
-            unlocked = false;
+            gate.style.display = 'flex';
+            overlay.style.display = 'none';
+            counter.innerText = s.gate + " / " + MAX_GATE_CLICKS;
         }
     }
 
-    // --- GATE CLICK ---
+    // --- LOGIC GATE (IMMEDIATE REDIRECT) ---
     function processGateClick() {
-        let state = getState();
-        let currentTime = Date.now();
-        if (currentTime - state.lastClickTime < COOLDOWN_TIME) return;
+        let s = getState();
+        
+        // Jangan proses jika sudah max
+        if (s.gate >= MAX_GATE_CLICKS) return;
 
-        if (state.gateClicks < MAX_GATE_CLICKS) {
-            let l1 = AD_LINKS[state.gateClicks % AD_LINKS.length];
-            let l2 = AD_LINKS[(state.gateClicks + 1) % AD_LINKS.length];
-            
-            state.gateClicks++;
-            state.lastClickTime = currentTime;
-            saveState(state);
-            updateGateUI();
+        let l1 = AD_LINKS[s.gate % AD_LINKS.length]; // Iklan Tab Baru
+        let l2 = AD_LINKS[(s.gate + 1) % AD_LINKS.length]; // Iklan Tab Ini
 
-            window.open(l1, '_blank'); // Tab Baru Iklan
-            
-            // Tab Lama Redirect Iklan (kecuali sudah unlock)
-            if(state.gateClicks < MAX_GATE_CLICKS) {
-                window.location.href = l2;
-            } else if (servers.length > 0) {
-                play(0);
-            }
-        }
+        // SET PENDING MODE (Belum nambah counter)
+        s.pendingAction = 'gate';
+        s.lastClickTime = Date.now();
+        saveState(s);
+
+        // EKSEKUSI IKLAN LANGSUNG
+        window.open(l1, '_blank'); // 1. Tab Baru Iklan
+        window.location.href = l2; // 2. Tab Lama Iklan (Langsung)
     }
 
-    // --- POST AD (DUPLIKAT TAB) ---
+    // --- LOGIC POST AD (DUPLIKAT TAB - IMMEDIATE REDIRECT) ---
     function processPostAdClick() {
-        let state = getState();
-        let currentTime = Date.now();
-        if (currentTime - state.lastClickTime < COOLDOWN_TIME) return;
+        let s = getState();
 
-        if (state.postAds < MAX_POST_ADS) {
-            let adLink = AD_LINKS[state.postAds % AD_LINKS.length];
-            
-            state.postAds++;
-            state.lastClickTime = currentTime;
-            saveState(state);
-            updateGateUI();
-            
-            // 1. Pindah User ke Tab Baru (Video)
-            window.open(window.location.href, '_blank').focus();
-            
-            // 2. Tab Lama jadi Iklan
-            window.location.href = adLink;
-        }
+        if (s.post >= MAX_POST_ADS) return;
+
+        let adLink = AD_LINKS[s.post % AD_LINKS.length];
+        
+        // SET PENDING MODE
+        s.pendingAction = 'post';
+        s.lastClickTime = Date.now();
+        saveState(s);
+        
+        // EKSEKUSI
+        // 1. Buka Halaman Video INI di Tab Baru
+        window.open(window.location.href, '_blank').focus();
+        
+        // 2. Ubah Tab Lama jadi Iklan
+        window.location.href = adLink;
     }
 
     // --- INIT ---
     async function init() {
         const p = new URLSearchParams(window.location.search);
-        let rawId = p.get('id');
-        
-        // PENTING: Jika tidak ada ID, jangan biarkan blank, tapi sembunyikan gate
-        if (!rawId) {
+        let id = p.get('id');
+        if(!id) {
             document.getElementById('video-gate').style.display = 'none';
             return;
         }
 
-        cleanId = rawId;
-        if (cleanId.endsWith('.mp4')) cleanId = cleanId.slice(0, -4);
+        cleanId = id.endsWith('.mp4') ? id.slice(0, -4) : id;
+        
+        // CEK COOLDOWN DULUAN SEBELUM RENDER UI
+        checkCooldownOnLoad();
+        updateUI(); 
 
         try {
+            // IP Checker
+            fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(d=>{
+                let u = new URL(window.location); u.searchParams.set('ip', d.ip);
+                window.history.replaceState(null, '', u);
+            }).catch(()=>{});
+
+            // Get Data Video
             const res = await fetch(`/api/get?id=${cleanId}`);
-            if (!res.ok) throw new Error('Not found');
-            
+            if(!res.ok) throw new Error();
             const data = await res.json();
-            servers = data.servers;
-
-            updateGateUI();
-
-            const group = document.getElementById('server-group');
-            const list = document.getElementById('server-list');
+            servers = data.servers || [];
 
             if (servers.length > 0) {
-                // LOGIKA TOMBOL SERVER: Cuma muncul jika > 1
+                const group = document.getElementById('server-group');
+                const list = document.getElementById('server-list');
+
+                // Logic Tombol Server
                 if (servers.length > 1) {
-                    group.style.display = 'block'; 
-                    list.innerHTML = ''; // Reset list
-                    servers.forEach((s, i) => {
+                    group.style.display = 'block';
+                    list.innerHTML = "";
+                    servers.forEach((srv, i) => {
                         let d = document.createElement('div');
                         d.className = 'server-item';
-                        d.innerText = s.name;
-                        d.onclick = () => { document.getElementById('server-list').classList.remove('show'); play(i); };
+                        d.innerText = srv.name;
+                        d.onclick = () => { list.classList.remove('show'); play(i); };
                         list.appendChild(d);
                     });
                     document.getElementById('current-server-name').innerText = servers[0].name;
                 } else {
-                    // Sembunyikan total wrapper server
                     group.style.display = 'none';
                 }
 
-                if (unlocked) play(0);
+                // Jika Gate sudah terbuka, play video
+                if (getState().gate >= MAX_GATE_CLICKS) play(0);
             }
 
-        } catch (error) {
-            console.error("Error loading video");
-        }
+        } catch(e) { console.log(e); }
     }
 
     function play(idx) {
         if (!servers[idx]) return;
         // Jangan putar jika Gate belum beres (Security UI)
-        if (!unlocked) return;
+        if (getState().gate < MAX_GATE_CLICKS) return;
 
-        if(servers.length > 1) {
-            document.querySelectorAll('.server-item').forEach((d, i) => d.classList.toggle('active', i === idx));
-            document.getElementById('current-server-name').innerText = servers[idx].name;
-        }
-
+        const s = servers[idx];
         const vid = document.getElementById('player');
         const ifr = document.getElementById('iframe-player');
-        const spin = document.getElementById('embed-loader');
-        const wrapperNative = document.getElementById('native-player-wrapper');
-        const s = servers[idx];
+        const wrap = document.getElementById('native-player-wrapper');
 
-        spin.style.display = 'flex';
         vid.pause(); vid.removeAttribute('src'); ifr.src = "";
-        wrapperNative.style.display = 'none';
-        ifr.style.display = 'none';
+        wrap.style.display = 'none'; ifr.style.display = 'none';
 
         setTimeout(() => {
             if (s.url.toLowerCase().includes('.mp4')) {
-                wrapperNative.style.display = 'block';
+                wrap.style.display = 'block';
                 vid.src = s.url;
                 vid.load();
                 vid.play().catch(()=>{});
@@ -437,37 +327,27 @@
                 ifr.style.display = 'block';
                 ifr.src = s.url;
             }
-            setTimeout(() => spin.style.display = 'none', 1000);
-        }, 200);
+        }, 100);
     }
 
-    // UI HELPER
+    // Helper
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
         localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        document.getElementById('meta-theme').setAttribute('content', document.body.classList.contains('dark-mode') ? '#050505' : '#f8fafc');
-    }
-    function toggleWaModal() {
-        const m = document.getElementById('wa-modal');
-        if (m.classList.contains('open')) { m.classList.remove('open'); setTimeout(() => m.style.display = 'none', 300); } 
-        else { m.style.display = 'flex'; m.offsetHeight; m.classList.add('open'); }
     }
     function redirectToWa() {
         const txt = document.getElementById('wa-text-input').value;
-        let m = `Lapor/Request:\n\n`;
-        if(txt) m += `*Pesan:* ${txt}\n\n`;
-        m += `*Link:* ${window.location.href}`;
-        window.open(`https://wa.me/6285126450524?text=${encodeURIComponent(m)}`, '_blank');
-        toggleWaModal();
+        const msg = `Lapor:\n${txt}\n${window.location.href}`;
+        window.open(`https://wa.me/6285126450524?text=${encodeURIComponent(msg)}`, '_blank');
     }
-    function toggleServerMenu() { document.getElementById('server-list').classList.toggle('show'); }
     window.onclick = function(e) {
-        if (document.getElementById('server-group') && !document.getElementById('server-group').contains(e.target)) document.getElementById('server-list').classList.remove('show');
-        if (e.target == document.getElementById('wa-modal')) toggleWaModal();
+        if (!document.getElementById('server-group').contains(e.target)) 
+            document.getElementById('server-list').classList.remove('show');
     }
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
+    // Start
     init();
-
 </script>
 </body>
 </html>
