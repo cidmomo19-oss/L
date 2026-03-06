@@ -167,56 +167,7 @@
 <div id="wa-modal">
     <div class="wa-modal-content">
         <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-            </svg>
-            Lapor / Request
-        </h3>
-        <div class="wa-step"><div class="step-num">1</div><div class="step-text"><strong>Screenshot</strong> layar jika error.</div></div>
-        <div class="wa-step"><div class="step-num">2</div><div class="step-text">Tulis detail masalah atau <strong>Video</strong> request:</div></div>
-        <div class="wa-input-area">
-            <label class="wa-input-label">Pesan Tambahan:</label>
-            <textarea id="wa-text-input" class="wa-textarea" placeholder="Contoh: Link mati / Request anu"></textarea>
-        </div>
-        <div class="wa-actions">
-            <button class="btn-wa-cancel" onclick="toggleWaModal()">Tutup</button>
-            <button class="btn-wa-go" onclick="redirectToWa()">Chat Admin</button>
-        </div>
-    </div>
-</div>
-
-<div id="content-wrapper">
-    <div class="player-container">
-        <!-- GATE (3x Klik Tab Baru + Tab Lama) -->
-        <div id="video-gate" onclick="processGateClick()">
-            <div class="gate-msg">Klik Play <span>3 Kali</span><br>Untuk Membuka Video</div>
-            <div class="play-trigger">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" /></svg>
-            </div>
-            <div class="gate-counter" id="counter-display">0 / 3</div>
-        </div>
-
-        <!-- OVERLAY POST-AD (Klik Duplikat Halaman + Tab Lama Iklan) -->
-        <div id="post-ad-overlay" onclick="processPostAdClick()" style="position:absolute; inset:0; z-index:45; display:none; cursor:pointer;"></div>
-
-        <div id="embed-loader"><div class="spinner"></div></div>
-        
-        <!-- NATIVE -->
-        <div id="native-player-wrapper" style="width:100%; height:100%; display:none;">
-            <video id="player" controls playsinline preload="none" style="width:100%; height:100%; object-fit:contain;"></video>
-        </div>
-        <!-- IFRAME -->
-        <iframe id="iframe-player" allowfullscreen allow="autoplay; fullscreen" style="display:none; width:100%; height:100%; border:none;"></iframe>
-    </div>
-
-    <div id="tools-container">
-        <div class="tools-left">
-            <button class="btn-icon-only" onclick="toggleTheme()" title="Ganti Mode">
-                <svg class="icon-moon" style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                <svg class="icon-sun" style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            </button>
-
-            <button class="btn-icon-only" onclick="toggleWaModal()" title="Lapor Masalah">
-                <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+            <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
             </button>
         </div>
 
@@ -256,9 +207,9 @@
         "https://fishermanwithavenge.com/bmaye227ji?key=21143f6352edf65a6b64615e9bb37bb9" 
     ];
     const MAX_GATE_CLICKS = 3;
-    const MAX_POST_ADS = 2; // Iklan setelah player kebuka (Maksimal 2 kali)
+    const MAX_POST_ADS = 2; // Iklan player setelah unlock
     const EXPIRY_TIME = 60 * 60 * 1000; // 1 Jam
-    const COOLDOWN_TIME = 3000; // Waktu tunggu anti-spam back (3 Detik)
+    const COOLDOWN_TIME = 3000; // 3 DETIK (Waktu tunggu anti-spam)
 
     // --- STATE MANAGEMENT ---
     function getSaveKey() {
@@ -272,7 +223,6 @@
                 return state;
             }
         } catch(e) {}
-        
         return { gateClicks: 0, postAds: 0, time: Date.now(), lastClickTime: 0 };
     }
 
@@ -304,15 +254,12 @@
         }
     }
 
-    // --- GATE CLICK (COOLDOWN 3 DETIK) ---
+    // --- GATE CLICK ---
     function processGateClick() {
         let state = getState();
         let currentTime = Date.now();
 
-        // Abaikan jika spam klik / balik terlalu cepat (< 3 detik)
-        if (currentTime - state.lastClickTime < COOLDOWN_TIME) {
-            return; 
-        }
+        if (currentTime - state.lastClickTime < COOLDOWN_TIME) return;
 
         if (state.gateClicks < MAX_GATE_CLICKS) {
             let l1 = AD_LINKS[state.gateClicks % AD_LINKS.length];
@@ -327,7 +274,7 @@
             // 1. Buka Tab Baru (Iklan)
             window.open(l1, '_blank');
             
-            // 2. Tab Lama Redirect Iklan (Jika belum kebuka videonya)
+            // 2. Tab Lama Redirect Iklan
             if(state.gateClicks < MAX_GATE_CLICKS) {
                 window.location.href = l2; 
             } else if (servers.length > 0) {
@@ -336,28 +283,28 @@
         }
     }
 
-    // --- POST AD CLICK (DUPLIKAT TAB BARU + TAB LAMA IKLAN) ---
+    // --- POST AD CLICK (DUPLICATE LOGIC) ---
+    // User di Tab Baru, Tab Lama jadi Iklan
     function processPostAdClick() {
         let state = getState();
         let currentTime = Date.now();
 
-        if (currentTime - state.lastClickTime < COOLDOWN_TIME) {
-            return;
-        }
+        if (currentTime - state.lastClickTime < COOLDOWN_TIME) return;
 
         if (state.postAds < MAX_POST_ADS) {
             let adLink = AD_LINKS[state.postAds % AD_LINKS.length];
+            
             state.postAds++;
             state.lastClickTime = currentTime;
             saveState(state);
             
-            updateGateUI(); // Update UI di tab saat ini dulu
+            updateGateUI();
             
-            // LOGIKA BARU: DUPLIKAT HALAMAN
-            // 1. Buka link web lu saat ini di tab baru (User akan lompat dan nonton di tab baru)
-            window.open(window.location.href, '_blank');
+            // 1. Buka Halaman Video INI di Tab Baru (User lanjut nonton disini)
+            // Menggunakan focus() agar user otomatis pindah ke tab baru
+            window.open(window.location.href, '_blank').focus();
             
-            // 2. Ubah tab lama ini menjadi iklan
+            // 2. Ubah Halaman INI (Tab Lama) menjadi Iklan
             window.location.href = adLink;
         }
     }
@@ -386,7 +333,7 @@
                 const list = document.getElementById('server-list');
                 const group = document.getElementById('server-group');
                 
-                // JIKA SERVER CUMA 1: SEMBUNYIKAN TOMBOL PILIH SERVER
+                // LOGIC SEMBUNYIKAN TOMBOL SERVER JIKA CUMA 1
                 if (servers.length > 1) {
                     group.style.display = 'block'; 
                     servers.forEach((s, i) => {
@@ -398,11 +345,13 @@
                     });
                     document.getElementById('current-server-name').innerText = servers[0].name;
                 } else {
-                    // LOGIKA BARU: HILANGKAN TAMPILAN JIKA CUMA 1 SERVER
-                    group.style.display = 'none'; 
+                    // Sembunyikan total wrapper server
+                    group.style.display = 'none';
+                    // Tapi play yang pertama
+                    play(0);
                 }
 
-                if (unlocked) play(0);
+                if (unlocked && servers.length > 1) play(0);
             }
 
         } catch (error) {
@@ -411,10 +360,10 @@
     }
 
     function play(idx) {
-        if (!servers[idx] || !unlocked) return;
+        if (!servers[idx]) return; // Hapus check unlocked disini biar pre-load bisa jalan
+        if (!unlocked) return; // Tapi UI tetap diblokir overlay gate
         
-        // Cek jika elemen ini masih ada (untuk server > 1)
-        if(document.getElementById('current-server-name')) {
+        if(servers.length > 1) {
             document.querySelectorAll('.server-item').forEach((d, i) => d.classList.toggle('active', i === idx));
             document.getElementById('current-server-name').innerText = servers[idx].name;
         }
@@ -463,15 +412,9 @@
         window.open(`https://wa.me/6285126450524?text=${encodeURIComponent(m)}`, '_blank');
         toggleWaModal();
     }
-    function toggleServerMenu() { 
-        let list = document.getElementById('server-list');
-        if(list) list.classList.toggle('show'); 
-    }
+    function toggleServerMenu() { document.getElementById('server-list').classList.toggle('show'); }
     window.onclick = function(e) {
-        if (document.getElementById('server-group') && !document.getElementById('server-group').contains(e.target)) {
-            let list = document.getElementById('server-list');
-            if(list) list.classList.remove('show');
-        }
+        if (document.getElementById('server-group') && !document.getElementById('server-group').contains(e.target)) document.getElementById('server-list').classList.remove('show');
         if (e.target == document.getElementById('wa-modal')) toggleWaModal();
     }
 
