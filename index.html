@@ -161,7 +161,7 @@
 
     </style>
 </head>
-<body data-version="v47.0-ANTI-SPAM-ADS">
+<body data-version="v48.0-DUPLICATE-TAB-ADS">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
@@ -195,7 +195,7 @@
             <div class="gate-counter" id="counter-display">0 / 3</div>
         </div>
 
-        <!-- OVERLAY POST-AD (2x Klik Tab Utama) -->
+        <!-- OVERLAY POST-AD (Klik Duplikat Halaman + Tab Lama Iklan) -->
         <div id="post-ad-overlay" onclick="processPostAdClick()" style="position:absolute; inset:0; z-index:45; display:none; cursor:pointer;"></div>
 
         <div id="embed-loader"><div class="spinner"></div></div>
@@ -256,9 +256,9 @@
         "https://fishermanwithavenge.com/bmaye227ji?key=21143f6352edf65a6b64615e9bb37bb9" 
     ];
     const MAX_GATE_CLICKS = 3;
-    const MAX_POST_ADS = 2; // Iklan player setelah unlock
-    const EXPIRY_TIME = 60 * 60 * 1000; // 1 Jam dalam milidetik
-    const COOLDOWN_TIME = 3000; // 3 DETIK (Waktu tunggu anti-spam back)
+    const MAX_POST_ADS = 2; // Iklan setelah player kebuka (Maksimal 2 kali)
+    const EXPIRY_TIME = 60 * 60 * 1000; // 1 Jam
+    const COOLDOWN_TIME = 3000; // Waktu tunggu anti-spam back (3 Detik)
 
     // --- STATE MANAGEMENT ---
     function getSaveKey() {
@@ -273,7 +273,6 @@
             }
         } catch(e) {}
         
-        // lastClickTime disimpan untuk ngetrack kapan terakhir user neken tombol
         return { gateClicks: 0, postAds: 0, time: Date.now(), lastClickTime: 0 };
     }
 
@@ -305,14 +304,14 @@
         }
     }
 
-    // --- GATE CLICK DENGAN LOGIKA COOLDOWN 3 DETIK ---
+    // --- GATE CLICK (COOLDOWN 3 DETIK) ---
     function processGateClick() {
         let state = getState();
         let currentTime = Date.now();
 
-        // JIKA USER KLIK KURANG DARI 3 DETIK DARI KLIK SEBELUMNYA, ABAIKAN SAJA.
+        // Abaikan jika spam klik / balik terlalu cepat (< 3 detik)
         if (currentTime - state.lastClickTime < COOLDOWN_TIME) {
-            return; // Diem aja, gak terjadi apa-apa
+            return; 
         }
 
         if (state.gateClicks < MAX_GATE_CLICKS) {
@@ -320,7 +319,7 @@
             let l2 = AD_LINKS[(state.gateClicks + 1) % AD_LINKS.length];
             
             state.gateClicks++;
-            state.lastClickTime = currentTime; // Catat waktu klik terbaru
+            state.lastClickTime = currentTime;
             saveState(state);
             
             updateGateUI();
@@ -328,7 +327,7 @@
             // 1. Buka Tab Baru (Iklan)
             window.open(l1, '_blank');
             
-            // 2. Tab Lama Redirect Iklan (Kecuali kalau udah masuk klik ke-3)
+            // 2. Tab Lama Redirect Iklan (Jika belum kebuka videonya)
             if(state.gateClicks < MAX_GATE_CLICKS) {
                 window.location.href = l2; 
             } else if (servers.length > 0) {
@@ -337,7 +336,7 @@
         }
     }
 
-    // --- POST AD CLICK (JUGA DIBERI COOLDOWN 3 DETIK BIAR GAK KEPENCET DOBEL) ---
+    // --- POST AD CLICK (DUPLIKAT TAB BARU + TAB LAMA IKLAN) ---
     function processPostAdClick() {
         let state = getState();
         let currentTime = Date.now();
@@ -347,15 +346,19 @@
         }
 
         if (state.postAds < MAX_POST_ADS) {
-            let l1 = AD_LINKS[state.postAds % AD_LINKS.length];
+            let adLink = AD_LINKS[state.postAds % AD_LINKS.length];
             state.postAds++;
-            state.lastClickTime = currentTime; // Catat waktu klik
+            state.lastClickTime = currentTime;
             saveState(state);
             
-            updateGateUI();
+            updateGateUI(); // Update UI di tab saat ini dulu
             
-            // Redirect di tab utama
-            window.location.href = l1;
+            // LOGIKA BARU: DUPLIKAT HALAMAN
+            // 1. Buka link web lu saat ini di tab baru (User akan lompat dan nonton di tab baru)
+            window.open(window.location.href, '_blank');
+            
+            // 2. Ubah tab lama ini menjadi iklan
+            window.location.href = adLink;
         }
     }
 
@@ -383,6 +386,7 @@
                 const list = document.getElementById('server-list');
                 const group = document.getElementById('server-group');
                 
+                // JIKA SERVER CUMA 1: SEMBUNYIKAN TOMBOL PILIH SERVER
                 if (servers.length > 1) {
                     group.style.display = 'block'; 
                     servers.forEach((s, i) => {
@@ -394,10 +398,8 @@
                     });
                     document.getElementById('current-server-name').innerText = servers[0].name;
                 } else {
-                    group.style.display = 'block';
-                    document.getElementById('current-server-name').innerText = servers[0].name;
-                    group.querySelector('svg:last-child').style.display = 'none'; 
-                    group.onclick = null;
+                    // LOGIKA BARU: HILANGKAN TAMPILAN JIKA CUMA 1 SERVER
+                    group.style.display = 'none'; 
                 }
 
                 if (unlocked) play(0);
@@ -411,8 +413,11 @@
     function play(idx) {
         if (!servers[idx] || !unlocked) return;
         
-        document.querySelectorAll('.server-item').forEach((d, i) => d.classList.toggle('active', i === idx));
-        document.getElementById('current-server-name').innerText = servers[idx].name;
+        // Cek jika elemen ini masih ada (untuk server > 1)
+        if(document.getElementById('current-server-name')) {
+            document.querySelectorAll('.server-item').forEach((d, i) => d.classList.toggle('active', i === idx));
+            document.getElementById('current-server-name').innerText = servers[idx].name;
+        }
 
         const vid = document.getElementById('player');
         const ifr = document.getElementById('iframe-player');
@@ -458,9 +463,15 @@
         window.open(`https://wa.me/6285126450524?text=${encodeURIComponent(m)}`, '_blank');
         toggleWaModal();
     }
-    function toggleServerMenu() { document.getElementById('server-list').classList.toggle('show'); }
+    function toggleServerMenu() { 
+        let list = document.getElementById('server-list');
+        if(list) list.classList.toggle('show'); 
+    }
     window.onclick = function(e) {
-        if (document.getElementById('server-group') && !document.getElementById('server-group').contains(e.target)) document.getElementById('server-list').classList.remove('show');
+        if (document.getElementById('server-group') && !document.getElementById('server-group').contains(e.target)) {
+            let list = document.getElementById('server-list');
+            if(list) list.classList.remove('show');
+        }
         if (e.target == document.getElementById('wa-modal')) toggleWaModal();
     }
 
