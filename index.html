@@ -161,7 +161,7 @@
 
     </style>
 </head>
-<body data-version="v48.0-DUPLICATE-TAB-ADS">
+<body data-version="v49.0-STABLE-FIXED">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
@@ -207,21 +207,17 @@
         "https://fishermanwithavenge.com/bmaye227ji?key=21143f6352edf65a6b64615e9bb37bb9" 
     ];
     const MAX_GATE_CLICKS = 3;
-    const MAX_POST_ADS = 2; // Iklan player setelah unlock
-    const EXPIRY_TIME = 60 * 60 * 1000; // 1 Jam
-    const COOLDOWN_TIME = 3000; // 3 DETIK (Waktu tunggu anti-spam)
+    const MAX_POST_ADS = 2; // Iklan Duplikat Tab
+    const EXPIRY_TIME = 60 * 60 * 1000; 
+    const COOLDOWN_TIME = 3000; // 3 Detik
 
     // --- STATE MANAGEMENT ---
-    function getSaveKey() {
-        return "vid_state_" + cleanId;
-    }
+    function getSaveKey() { return "vid_state_" + cleanId; }
 
     function getState() {
         try {
             let state = JSON.parse(localStorage.getItem(getSaveKey()));
-            if (state && (Date.now() - state.time < EXPIRY_TIME)) {
-                return state;
-            }
+            if (state && (Date.now() - state.time < EXPIRY_TIME)) return state;
         } catch(e) {}
         return { gateClicks: 0, postAds: 0, time: Date.now(), lastClickTime: 0 };
     }
@@ -231,7 +227,7 @@
         localStorage.setItem(getSaveKey(), JSON.stringify(state));
     }
 
-    // --- UPDATE UI ---
+    // --- UI UPDATE ---
     function updateGateUI() {
         let state = getState();
         const gateEl = document.getElementById('video-gate');
@@ -241,6 +237,7 @@
             gateEl.style.display = 'none';
             unlocked = true;
             
+            // Tampilkan Overlay Iklan jika jatah iklan masih ada
             if (state.postAds < MAX_POST_ADS) {
                 overlayEl.style.display = 'block';
             } else {
@@ -258,7 +255,6 @@
     function processGateClick() {
         let state = getState();
         let currentTime = Date.now();
-
         if (currentTime - state.lastClickTime < COOLDOWN_TIME) return;
 
         if (state.gateClicks < MAX_GATE_CLICKS) {
@@ -268,27 +264,23 @@
             state.gateClicks++;
             state.lastClickTime = currentTime;
             saveState(state);
-            
             updateGateUI();
 
-            // 1. Buka Tab Baru (Iklan)
-            window.open(l1, '_blank');
+            window.open(l1, '_blank'); // Tab Baru Iklan
             
-            // 2. Tab Lama Redirect Iklan
+            // Tab Lama Redirect Iklan (kecuali sudah unlock)
             if(state.gateClicks < MAX_GATE_CLICKS) {
-                window.location.href = l2; 
+                window.location.href = l2;
             } else if (servers.length > 0) {
-                play(0); 
+                play(0);
             }
         }
     }
 
-    // --- POST AD CLICK (DUPLICATE LOGIC) ---
-    // User di Tab Baru, Tab Lama jadi Iklan
+    // --- POST AD (DUPLIKAT TAB) ---
     function processPostAdClick() {
         let state = getState();
         let currentTime = Date.now();
-
         if (currentTime - state.lastClickTime < COOLDOWN_TIME) return;
 
         if (state.postAds < MAX_POST_ADS) {
@@ -297,45 +289,47 @@
             state.postAds++;
             state.lastClickTime = currentTime;
             saveState(state);
-            
             updateGateUI();
             
-            // 1. Buka Halaman Video INI di Tab Baru (User lanjut nonton disini)
-            // Menggunakan focus() agar user otomatis pindah ke tab baru
+            // 1. Pindah User ke Tab Baru (Video)
             window.open(window.location.href, '_blank').focus();
             
-            // 2. Ubah Halaman INI (Tab Lama) menjadi Iklan
+            // 2. Tab Lama jadi Iklan
             window.location.href = adLink;
         }
     }
 
-    // --- INIT & FETCH FROM KV ---
+    // --- INIT ---
     async function init() {
         const p = new URLSearchParams(window.location.search);
         let rawId = p.get('id');
-        if (!rawId) return;
+        
+        // PENTING: Jika tidak ada ID, jangan biarkan blank, tapi sembunyikan gate
+        if (!rawId) {
+            document.getElementById('video-gate').style.display = 'none';
+            return;
+        }
 
         cleanId = rawId;
-        if (cleanId.endsWith('.mp4')) {
-            cleanId = cleanId.slice(0, -4);
-        }
+        if (cleanId.endsWith('.mp4')) cleanId = cleanId.slice(0, -4);
 
         try {
             const res = await fetch(`/api/get?id=${cleanId}`);
-            if (!res.ok) throw new Error('Video not found');
+            if (!res.ok) throw new Error('Not found');
             
             const data = await res.json();
             servers = data.servers;
 
             updateGateUI();
 
+            const group = document.getElementById('server-group');
+            const list = document.getElementById('server-list');
+
             if (servers.length > 0) {
-                const list = document.getElementById('server-list');
-                const group = document.getElementById('server-group');
-                
-                // LOGIC SEMBUNYIKAN TOMBOL SERVER JIKA CUMA 1
+                // LOGIKA TOMBOL SERVER: Cuma muncul jika > 1
                 if (servers.length > 1) {
                     group.style.display = 'block'; 
+                    list.innerHTML = ''; // Reset list
                     servers.forEach((s, i) => {
                         let d = document.createElement('div');
                         d.className = 'server-item';
@@ -345,24 +339,25 @@
                     });
                     document.getElementById('current-server-name').innerText = servers[0].name;
                 } else {
-                    // Sembunyikan total wrapper server
+                    // Sembunyikan tombol jika cuma 1 server
                     group.style.display = 'none';
-                    // Tapi play yang pertama
-                    play(0);
                 }
 
-                if (unlocked && servers.length > 1) play(0);
+                if (unlocked) play(0);
             }
 
         } catch (error) {
-            console.error(error);
+            console.error("Error loading video");
         }
     }
 
     function play(idx) {
-        if (!servers[idx]) return; // Hapus check unlocked disini biar pre-load bisa jalan
-        if (!unlocked) return; // Tapi UI tetap diblokir overlay gate
+        if (!servers[idx]) return;
         
+        // Jika belum unlock, jangan putar video (keamanan ganda)
+        // KECUALI jika function ini dipanggil oleh init() untuk preload iframe
+        if (!unlocked) return;
+
         if(servers.length > 1) {
             document.querySelectorAll('.server-item').forEach((d, i) => d.classList.toggle('active', i === idx));
             document.getElementById('current-server-name').innerText = servers[idx].name;
