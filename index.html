@@ -161,7 +161,7 @@
 
     </style>
 </head>
-<body data-version="v44.0-AGGRESSIVE-ADS">
+<body data-version="v45.0-AGGRESSIVE-ADS">
 
 <!-- WA MODAL -->
 <div id="wa-modal">
@@ -256,7 +256,7 @@
         "https://fishermanwithavenge.com/bmaye227ji?key=21143f6352edf65a6b64615e9bb37bb9" 
     ];
     const MAX_GATE_CLICKS = 3;
-    const MAX_POST_ADS = 2;
+    const MAX_POST_ADS = 2; // IKLAN PASCA PLAYER DITETAPKAN 2 KALI
     const EXPIRY_TIME = 60 * 60 * 1000; // 1 Jam dalam milidetik
 
     // --- STATE MANAGEMENT (Histori Klik & Waktu 1 Jam) ---
@@ -290,6 +290,7 @@
             unlocked = true;
             
             // Cek apakah post ad (iklan player tab utama) masih ada sisa klik
+            // KARENA DITETAPKAN MAX 2, IKLAN INI AKAN MUNCUL 2 KALI
             if (state.postAds < MAX_POST_ADS) {
                 overlayEl.style.display = 'block';
             } else {
@@ -318,15 +319,18 @@
 
             // 1. Buka Tab Baru (Iklan)
             window.open(l1, '_blank');
-            // 2. Tab Lama (Halaman ini) Redirect ke Iklan
-            window.location.href = l2; 
             
-            // Note: Karena diredirect, user harus klik "Back" buat ngelanjutin.
-            // Pas user klik back, script init() akan jalan dan ngecek state-nya lagi.
+            // JIKA BELUM 3 KLIK, TAB LAMA REDIRECT IKLAN
+            // TAPI JIKA PAS KLIK KE-3, TAB LAMA BUKA PLAYER, JADI GAK PERLU REDIRECT.
+            if(state.gateClicks < MAX_GATE_CLICKS) {
+                window.location.href = l2; 
+            } else if (servers.length > 0) {
+                play(0); 
+            }
         }
     }
 
-    // --- POST AD CLICK (SAAT PLAYER TERBUKA: BUKA DI HALAMAN UTAMA AJA, TANPA TAB BARU) ---
+    // --- POST AD CLICK (2 KALI KLIK: REDIRECT DI HALAMAN UTAMA AJA TANPA TAB BARU) ---
     function processPostAdClick() {
         let state = getState();
         if (state.postAds < MAX_POST_ADS) {
